@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StockLedger</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg"><link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#ffffff">
+<style>
+:root{--bg:#f3f5f8;--fld:#ffffff;--sf:#ffffff;--ink:#0f172a;--mu:#64748b;--ln:#e2e8f0;--ac:#2456d8;--ai:#ffffff;--bad:#dc2626;--warn:#b45309;--blu:#2563eb;--pur:#7c3aed;--soft:#f1f5f9;--sh:0 1px 2px rgba(15,23,42,.05),0 1px 3px rgba(15,23,42,.06);--r:12px;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1118;--fld:#0f1720;--sf:#151e29;--ink:#e8edf3;--mu:#93a1b3;--ln:#263241;--ac:#6b9bff;--ai:#0b1220;--bad:#f87171;--warn:#fbbf24;--blu:#7aa7ff;--pur:#b79cff;--soft:#1b2634;--sh:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b1118;--fld:#0f1720;--sf:#151e29;--ink:#e8edf3;--mu:#93a1b3;--ln:#263241;--ac:#6b9bff;--ai:#0b1220;--bad:#f87171;--warn:#fbbf24;--blu:#7aa7ff;--pur:#b79cff;--soft:#1b2634;--sh:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,"Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--sf);z-index:30}
+main{max-width:600px;margin:0 auto;padding:18px 16px calc(96px + env(safe-area-inset-bottom,0px))}
+h2{margin:0 0 14px;font-size:1.4rem;font-weight:700;letter-spacing:-.02em;line-height:1.25}
+h3{margin:22px 0 8px;font-size:.72rem;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+small,.card small{color:var(--mu);display:block;font-size:.82rem;line-height:1.4}
+b,strong{font-weight:600}
+/* ---------- header & navigation ---------- */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--sf);border-bottom:1px solid var(--ln)}
+.top{display:flex;align-items:center;justify-content:space-between;max-width:600px;margin:0 auto;padding:10px 12px 6px 16px}
+.brand{display:flex;align-items:center;gap:10px;font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
+.mark{border-radius:9px}.logo{width:30px;height:30px;border-radius:9px;background:var(--ac);color:var(--ai);display:grid;place-items:center}
+.logo svg{width:18px;height:18px}
+.gear{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;color:var(--mu);text-decoration:none;border:1px solid transparent}
+.gear svg{width:21px;height:21px}
+.gear:hover{background:var(--soft)}
+.gear[aria-current="page"]{color:var(--ac);background:var(--soft)}
+.tabs{display:flex;max-width:600px;margin:0 auto;padding:0 8px}
+.tabs a{flex:1;text-align:center;text-decoration:none;color:var(--mu);font-weight:600;font-size:.7rem;letter-spacing:.01em;padding:6px 0 8px;border-bottom:2px solid transparent;transition:color .15s}
+.tabs a svg{display:block;width:22px;height:22px;margin:0 auto 3px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs a[aria-current="page"]{color:var(--ac);border-bottom-color:var(--ac)}
+/* ---------- surfaces ---------- */
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;box-shadow:var(--sh)}
+details.card{padding:14px 16px}
+details{margin-top:0}
+summary{cursor:pointer;color:var(--ink);font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--mu);border-bottom:2px solid var(--mu);transform:rotate(45deg);margin:-3px 4px 0 8px;transition:transform .15s}
+details[open]>summary::after{transform:rotate(-135deg);margin-top:3px}
+details[open]>summary{margin-bottom:12px}
+.line{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--ln)}
+.line:first-child{border-top:0}
+.nm{font-size:1rem;font-weight:600}
+.big{font-size:1.4rem;font-weight:700;letter-spacing:-.02em}
+.amt{font-size:1.05rem;font-weight:600}
+.amt.owe-in{color:var(--bad)}.amt.owe-out{color:var(--ac)}.amt.zero{color:var(--mu)}
+.up{color:var(--ac)}.dn,.low{color:var(--bad)}.wa{color:var(--warn)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.three button{padding:9px 4px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.act-row{margin-top:10px;justify-content:flex-start}
+.stack{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.note{background:color-mix(in srgb,var(--warn) 10%,var(--sf));border:1px solid color-mix(in srgb,var(--warn) 35%,var(--ln));color:var(--warn);padding:12px 14px;border-radius:var(--r);margin-bottom:12px;font-size:.9rem}
+.chart{display:block}.chart text{fill:var(--mu);font-size:10px}
+.back{display:inline-flex;align-items:center;margin-bottom:10px;color:var(--ac);font-weight:600;text-decoration:none}
+/* ---------- forms ---------- */
+input,select,textarea{font:inherit;font-size:16px;padding:10px 12px;min-height:44px;border:1px solid var(--ln);border-radius:10px;background:var(--fld);color:var(--ink);width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
+input::placeholder{color:var(--mu);opacity:.8}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 20%,transparent)}
+input[type=search]{-webkit-appearance:none;appearance:none}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;text-align:left}
+input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;flex:none;margin:1px 0 0;accent-color:var(--ac)}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:.92rem}
+.qty{display:flex;gap:6px;align-items:center}.qty input{width:60px;text-align:center;padding:8px 4px;min-height:40px}
+/* ---------- buttons ---------- */
+button{font:inherit;font-size:.92rem;font-weight:600;min-height:40px;padding:8px 14px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);cursor:pointer;box-shadow:var(--sh);transition:background .15s,border-color .15s,transform .05s}
+button:hover{background:var(--soft)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.55;cursor:default}
+button.p{background:var(--ac);color:var(--ai);border-color:var(--ac);width:100%;min-height:46px;font-size:.98rem}
+button.p:hover{background:var(--ac);filter:brightness(.94)}
+button.tp{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.pur{background:var(--pur);border-color:var(--pur);color:#fff;width:100%}
+button.blu{background:var(--blu);border-color:var(--blu);color:#fff;width:100%}
+button.pur:hover,button.blu:hover{filter:brightness(.94)}
+button.rd{color:var(--pur);border-color:color-mix(in srgb,var(--pur) 45%,var(--ln))}
+button.ad{color:var(--blu);border-color:color-mix(in srgb,var(--blu) 45%,var(--ln))}
+button.del{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,var(--ln));background:transparent;box-shadow:none;font-size:.82rem;min-height:36px;padding:6px 12px}
+button.del.sm{min-height:30px;padding:3px 10px;font-size:.76rem}
+button.dbtn{background:var(--bad);border-color:var(--bad);color:#fff;width:100%;min-height:46px}
+.act{display:block;text-align:center;text-decoration:none;font-weight:600;font-size:.98rem;padding:13px 14px;border-radius:10px;background:var(--ac);color:var(--ai);box-shadow:var(--sh)}
+.act.b,button.act.b{background:var(--sf);color:var(--ink);border:1px solid var(--ln)}
+button.act{width:100%;border:0}
+.fab{position:fixed;left:50%;transform:translateX(-50%);border:0;cursor:pointer;white-space:nowrap;bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ac);color:var(--ai);padding:12px 22px;border-radius:999px;font-weight:600;font-size:.95rem;text-decoration:none;box-shadow:0 8px 22px rgba(15,23,42,.25);z-index:15}
+/* ---------- overlays ---------- */
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;z-index:50;display:none;max-width:90%;font-size:.9rem;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#modal{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:40;display:none;overflow:auto;padding:calc(16px + env(safe-area-inset-top,0px)) 12px 16px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.sheet,.bill{max-width:520px;margin:0 auto;border-radius:16px;padding:22px;background:var(--sf)}
+.sheet{border:1px solid var(--ln);box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.sheet h2{font-size:1.2rem}
+.bill{background:#fff;color:#111}
+.bill table{width:100%;border-collapse:collapse}.bill th,.bill td{padding:8px 4px;border-bottom:1px solid #e5e7eb;text-align:left}
+.bill .r{text-align:right}
+@media print{body>*:not(#modal){display:none!important}#modal{position:static;background:none;padding:0}.noprint{display:none}}
+</style>
+</head>
+<body>
+<header id="nav"><div class="top"><b class="brand"><svg class="mark" width="30" height="30" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3476f0"/><stop offset="1" stop-color="#183aaa"/></linearGradient></defs><rect width="1024" height="1024" rx="226" fill="url(#lg)"/><g stroke="#143296" stroke-width="10" stroke-linejoin="round"><polygon points="512,565 762,700 512,835 262,700" fill="#96b9ff"/><polygon points="512,425 762,560 512,695 262,560" fill="#cddeff"/><polygon points="512,285 762,420 512,555 262,420" fill="#ffffff"/></g></svg><span>StockLedger</span></b><a class="gear" href="#settings" aria-label="Settings and my account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a></div><nav class="tabs"><a href="#home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Home</a><a href="#sale"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>Sell</a><a href="#buy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7H6"/></svg>Buy</a><a href="#items"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>Stock</a><a href="#people"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>People</a></nav></header>
+<main id="app"></main>
+<div id="toast"></div><div id="modal"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+var CFG=window.APP_CONFIG||{};
+var API=(CFG.API_URL||"")+"/api/";
+/* Sign-in and cloud database (MongoDB through /api): true = login and shared data. false = no login, data stays on this device. */
+var USE_LOGIN=true;
+var CO="Your Company Name",CUR="₹";
+var prefs={theme:"light",co:"",rem:false,remDays:[3,7],remTime:"10:00"};try{Object.assign(prefs,JSON.parse(localStorage.getItem("stockapp_prefs")||"{}"))}catch(e){}
+if(prefs.co)CO=prefs.co;
+function savePrefs(){try{localStorage.setItem("stockapp_prefs",JSON.stringify(prefs))}catch(e){}}
+function applyTheme(){var r=document.documentElement,m=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches,d=prefs.theme=="dark"||(prefs.theme=="auto"&&m);
+ if(prefs.theme=="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",prefs.theme);
+ var tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.setAttribute("content",d?"#151e29":"#ffffff")}
+applyTheme();if(window.matchMedia)try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme)}catch(e){}
+var S={items:[],parties:[],docs:[],pays:[],adjs:[]},db=null,ready=0,canWrite=true,draft={sale:[],purchase:[]};
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function money(n){return (n<0?"-":"")+CUR+Math.abs(Math.round(n*100)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function uid(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function num(i){return parseFloat($("#"+i).value)||0}
+function toast(t){var e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.display="none"},2800)}
+function find(l,id){return l.filter(function(x){return x.id==id})[0]}
+function opts(l,sel){return l.map(function(x){return '<option value="'+x.id+'"'+(x.id==sel?" selected":"")+">"+esc(x.name)+"</option>"}).join("")}
+function nextNo(t){var m=0;S.docs.forEach(function(d){if(d.type==t){var n=parseInt(String(d.no).slice(2),10)||0;if(n>m)m=n}});return (t=="sale"?"S-":"P-")+String(m+1).padStart(4,"0")}
+
+/* ---- database layer: every item, party, bill and payment is one document ---- */
+var _lu=0;function nowu(){_lu=Math.max(_lu+1,Date.now());return _lu}
+function put(c,o){
+ var i=S[c].findIndex(function(x){return x.id==o.id});if(i<0)S[c].push(o);else S[c][i]=o;
+ if(!db){try{localStorage.setItem("stockapp_local",JSON.stringify(S))}catch(e){}return Promise.resolve()}
+ o._u=nowu();
+ return api("data",{op:"save",recs:[{coll:c,id:o.id,data:o}]}).catch(function(e){toast("Could not save: "+e.message);throw e})}
+function upd(c,id,patch){var o=Object.assign({},find(S[c],id),patch);return put(c,o)}
+function saveLocal(){try{localStorage.setItem("stockapp_local",JSON.stringify(S))}catch(e){}}
+function rm(c,id){
+ S[c]=S[c].filter(function(x){return x.id!=id});
+ if(!db){saveLocal();return Promise.resolve()}
+ return api("data",{op:"delete",items:[{coll:c,id:id}]}).catch(function(e){toast("Could not delete: "+e.message);refresh();throw e})}
+function revStock(ds){
+ var need={};ds.forEach(function(d){d.lines.forEach(function(l){need[l.itemId]=(need[l.itemId]||0)+(d.type=="sale"?l.qty:-l.qty)})});
+ return Promise.all(Object.keys(need).map(function(k){var it=find(S.items,k);if(!it)return 0;return upd("items",k,{stock:it.stock+need[k]})}))}
+function showDel(k,id){
+ var m="",x="",o;
+ if(k=="items"){o=find(S.items,id);m="Delete item <b>"+esc(o.name)+"</b>? Old bills keep their record of it, but it will no longer be in Stock."}
+ else if(k=="docs"){o=find(S.docs,id);m="Delete "+(o.type=="sale"?"invoice ":"purchase bill ")+"<b>"+o.no+"</b> for "+esc(o.partyName)+" ("+money(o.total)+")? The balance of this person will change.";
+  x='<label class="chk"><input type="checkbox" id="dx1"'+(o.imp?"":" checked")+'><span>Also put the stock back as it was before this bill</span></label>'}
+ else if(k=="pays"){o=find(S.pays,id);m="Delete the payment of <b>"+money(o.amount)+"</b> on "+o.date+" for "+esc(o.partyName)+"? The balance of this person will change."}
+ else{o=find(S.parties,id);var nb=S.docs.filter(function(d){return d.partyId==id}).length,np=S.pays.filter(function(y){return y.partyId==id}).length;
+  m="Delete <b>"+esc(o.name)+"</b> ("+o.type+")? They have "+nb+" bill"+(nb==1?"":"s")+" and "+np+" payment"+(np==1?"":"s")+".";
+  if(nb||np)x='<label class="chk"><input type="checkbox" id="dx1"><span>Also delete all their bills and payments. Leave this off to keep them in your sales records.</span></label>'+(nb?'<label class="chk"><input type="checkbox" id="dx2"><span>Put stock back for those bills (only when deleting bills)</span></label>':"")}
+ if(!o)return;
+ $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Delete?</h2><div>'+m+'<small>This cannot be undone.</small></div>'+x+'<button class="dbtn" data-act="dodel" data-k="'+k+'" data-id="'+id+'">Yes, delete</button><button data-act="closem">Cancel</button></div>';
+ $("#modal").style.display="block"}
+async function doDel(k,id){
+ var c1=$("#dx1"),y1=c1&&c1.checked,c2=$("#dx2"),y2=c2&&c2.checked;
+ if(k=="docs"){var d=find(S.docs,id);if(y1)await revStock([d]);await rm("docs",id)}
+ else if(k=="pays")await rm("pays",id);
+ else if(k=="items"){["sale","purchase"].forEach(function(t){draft[t]=draft[t].filter(function(l){return l.itemId!=id})});await rm("items",id)}
+ else{if(y1){var ds=S.docs.filter(function(d){return d.partyId==id}),ps=S.pays.filter(function(y){return y.partyId==id});
+   if(y2)await revStock(ds);
+   await Promise.all(ds.map(function(d){return rm("docs",d.id)}).concat(ps.map(function(y){return rm("pays",y.id)})))}
+  await rm("parties",id)}
+ $("#modal").style.display="none";toast("Deleted");render()}
+function startLocal(){db=null;try{var t=localStorage.getItem("stockapp_local");if(t){var o=JSON.parse(t);["items","parties","docs","pays","adjs"].forEach(function(c){S[c]=o[c]||[]})}}catch(e){}ready=1;render()}
+/* ---- accounts: email + password, email verification, cloud sync across devices ---- */
+var VIEWAS="",cloudCfg=USE_LOGIN,A=cloudCfg?"loading":"in",user=null,OWN=true,TOK="",cur={t:0,id:""},pollT=null,polling=0,loadMsg="",loadErr="",COLS=["items","parties","docs","pays","adjs"];
+function aerr(m){var e=$("#aerr");if(e){e.style.color="";e.textContent=m}}
+function anote(m){var e=$("#aerr");if(e){e.style.color="var(--ac)";e.textContent=m}}
+function maskEm(e){e=String(e||"");var i=e.indexOf("@");if(i<1)return "your email";return e.slice(0,Math.min(2,i))+"***"+e.slice(i)}
+/* ---- Supabase backend: this replaces the old /api server. Same function, same calls, so the rest of the app is unchanged. ---- */
+var SB=null;
+function sbc(){
+ if(SB)return SB;
+ if(!window.supabase||!CFG.SUPABASE_URL||!CFG.SUPABASE_ANON_KEY)throw new Error("Supabase is not set up. Put SUPABASE_URL and SUPABASE_ANON_KEY in config.js.");
+ SB=window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:"stockledger-auth"}});
+ return SB}
+function sbMsg(e){
+ var m=String(e&&e.message||e||""),c=String(e&&e.code||"");
+ if(/rate.?limit|too many|security purposes/i.test(m+" "+c))return "Too many requests. Wait a few minutes and try again.";
+ if(/invalid login/i.test(m))return "Wrong username or password.";
+ if(/token|otp|code/i.test(m)&&/expired|invalid/i.test(m))return "That code is wrong or expired. Ask for a new one.";
+ if(/already registered|already been registered/i.test(m))return "That email is already used by another account.";
+ if(/database error/i.test(m))return "That username is not available.";
+ if(/password/i.test(m)&&/least|weak|short/i.test(m))return "Password must be at least 6 characters.";
+ if(/sending.*email|smtp|email.*send/i.test(m))return "The email could not be sent. The owner must check the email (SMTP) settings in Supabase.";
+ if(/failed to fetch|network/i.test(m))return "No internet connection.";
+ return m||"Something went wrong."}
+async function sbEmail(id){var r=await sbc().rpc("email_for_login",{p_identity:String(id||"").trim().toLowerCase()});if(r.error)throw r.error;return r.data||""}
+async function sbSession(){
+ var r=await sbc().auth.getSession(),s=r.data&&r.data.session;
+ if(!s){AUTH.out("Please sign in.");throw new Error("Please sign in.")}
+ return s}
+function sbMe(u){var m=u.user_metadata||{};return {username:m.username||u.email,role:"user",name:m.name||m.username||u.email}}
+async function api(path,body){
+ var p=path.split("?")[0],sb=sbc(),b=body||{};
+ try{
+  if(p=="signup"&&body===undefined)return {open:true};
+  if(p=="login"){
+   var em=await sbEmail(b.username);if(!em)throw new Error("Wrong username or password.");
+   var r=await sb.auth.signInWithPassword({email:em,password:String(b.password||"")});
+   if(r.error){
+    if(/not confirmed/i.test(r.error.message||"")||r.error.code=="email_not_confirmed"){var ue=new Error("Please verify your email first.");ue.code="unverified";throw ue}
+    throw r.error}
+   var me=sbMe(r.data.user);return {token:r.data.session.access_token,role:"user",name:me.name,username:me.username}}
+  if(p=="signup"){
+   if(b.op=="verify"){
+    var e1=await sbEmail(b.username);if(!e1)throw new Error("That code is not valid. Ask for a new one.");
+    var v=await sb.auth.verifyOtp({email:e1,token:String(b.code||"").trim(),type:"signup"});if(v.error)throw v.error;
+    await sb.auth.signOut();return {ok:1,pending:false}}
+   if(b.op=="resend"){
+    var e2=await sbEmail(b.username);if(!e2)throw new Error("Nothing to verify for this username.");
+    var rs=await sb.auth.resend({type:"signup",email:e2});if(rs.error)throw rs.error;return {ok:1}}
+   var email=String(b.email||"").trim().toLowerCase();
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))throw new Error("Enter a valid email address.");
+   var name=email.split("@")[0].replace(/[^a-z0-9._-]/g,"").slice(0,30)||"user";
+   if(String(b.password||"").length<6)throw new Error("Password must be at least 6 characters.");
+   var su=await sb.auth.signUp({email:email,password:String(b.password),options:{data:{name:String(b.name||"").trim().slice(0,60)||name,username:name}}});
+   if(su.error)throw su.error;
+   if(su.data.user&&su.data.user.identities&&su.data.user.identities.length===0)throw new Error("That email is already used by another account.");
+   if(su.data.session){await sb.auth.signOut();throw new Error("Email confirmation is switched off in Supabase. Turn on Confirm email so the code is sent.")}
+   return {ok:1,verify:true,email:email}}
+  if(p=="reset"){
+   var e3=await sbEmail(b.identity);
+   if(b.op=="request"){if(e3){var rr=await sb.auth.resetPasswordForEmail(e3);if(rr.error&&/rate|security/i.test(rr.error.message))throw rr.error}return {ok:1}}
+   if(b.op=="confirm"){
+    if(!e3)throw new Error("That code is wrong or expired. Ask for a new one.");
+    var vv=await sb.auth.verifyOtp({email:e3,token:String(b.code||"").trim(),type:"recovery"});if(vv.error)throw vv.error;
+    var up=await sb.auth.updateUser({password:String(b.password||"")});if(up.error){await sb.auth.signOut();throw up.error}
+    await sb.auth.signOut();return {ok:1}}}
+  if(p=="data"){
+   var s=await sbSession(),u=s.user;
+   if(body===undefined){
+    var q=new URLSearchParams(path.split("?")[1]||""),ct=Number(q.get("t"))||0;
+    var qb=sb.from("records").select("coll,id,data,del,t").gt("t",ct).order("t",{ascending:true}).order("id",{ascending:true}).limit(1000);
+    if(!ct)qb=qb.eq("del",false);
+    var rd=await qb;if(rd.error)throw rd.error;
+    var rows=rd.data||[],last=rows[rows.length-1];
+    return {recs:rows.map(function(x){return x.del?{coll:x.coll,id:x.id,del:1}:{coll:x.coll,id:x.id,data:x.data}}),more:rows.length==1000,
+     cursor:last?{t:last.t,id:last.id}:{t:ct,id:q.get("id")||""},me:sbMe(u),as:u.id}}
+   if(b.op=="save"||b.op=="delete"){
+    var src=b.op=="save"?(b.recs||[]):(b.items||[]);
+    var out=src.map(function(x){return {user_id:u.id,coll:x.coll,id:x.id,data:b.op=="save"?x.data:null,del:b.op=="delete"}});
+    for(var i=0;i<out.length;i+=200){var w=await sb.from("records").upsert(out.slice(i,i+200),{onConflict:"user_id,coll,id"});if(w.error)throw w.error}
+    return {ok:1,n:out.length}}
+   if(b.op=="erase"){var er=await sb.from("records").update({del:true,data:null}).eq("user_id",u.id).eq("del",false);if(er.error)throw er.error;return {ok:1}}}
+  if(p=="users")throw new Error("Users are managed in the Supabase dashboard (Authentication -> Users).");
+  throw new Error("Unknown request.")
+ }catch(e){
+  if(e&&e.code=="unverified")throw e;
+  var er2=new Error(sbMsg(e));if(e&&e.code)er2.code=e.code;throw er2}}
+function vAuth(){
+ var h='<div style="text-align:center;margin:28px 0 8px"><svg class="mark" width="64" height="64" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3476f0"/><stop offset="1" stop-color="#183aaa"/></linearGradient></defs><rect width="1024" height="1024" rx="226" fill="url(#lg)"/><g stroke="#143296" stroke-width="10" stroke-linejoin="round"><polygon points="512,565 762,700 512,835 262,700" fill="#96b9ff"/><polygon points="512,425 762,560 512,695 262,560" fill="#cddeff"/><polygon points="512,285 762,420 512,555 262,420" fill="#ffffff"/></g></svg><h2 style="margin:10px 0 0">StockLedger</h2><small>Stock, billing and accounts</small></div>';
+ if(A=="loading")return h+'<div class="card">Loading…</div>';
+ if(A=="error")return h+'<div class="note">'+esc(loadErr||"Could not reach the server. Check your internet connection.")+'</div><button class="p" data-act="reload">Try again</button><button data-act="signout">Sign out</button>';
+ var bk='<button data-act="tin">← Back to sign in</button>';
+ if(AUTH.mode=="up")return h+'<div class="card stack"><b>Create account</b><input id="sn" autocomplete="name" placeholder="Your name"><input id="se" type="email" autocomplete="email" autocapitalize="none" autocorrect="off" inputmode="email" placeholder="Email address"><input id="apw" type="password" autocomplete="new-password" placeholder="Password (6+ characters)"><input id="apw2" type="password" autocomplete="new-password" placeholder="Repeat password"><div id="aerr" class="dn" role="alert"></div><button class="p" data-act="signup">Send verification code</button></div><small>We email you a 6-digit code to check your address. You can sign in right after.</small>'+bk;
+ if(AUTH.mode=="verify")return h+'<div class="card stack"><b>Verify your email</b><div>Enter the 6-digit code we sent to <b>'+esc(maskEm(AUTH.vm))+'</b>.<small>The code works for 10 minutes. Check your spam folder too.</small></div><input id="vc" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code" style="text-align:center;letter-spacing:.35em;font-size:1.2rem"><div id="aerr" class="dn" role="alert"></div><button class="p" data-act="everify">Verify email</button></div><button data-act="eresend">Resend code</button>'+bk;
+ if(AUTH.mode=="forgot")return h+'<div class="card stack"><b>Forgot password</b><div>Enter your username or email. We will email you a 6-digit code.<small>Accounts without an email cannot use this. Ask the owner to reset your password.</small></div><input id="fi" autocomplete="username" autocapitalize="none" autocorrect="off" placeholder="Email address"><div id="aerr" class="dn" role="alert"></div><button class="p" data-act="fsend">Send code</button></div><button data-act="tcode">I already have a code</button>'+bk;
+ if(AUTH.mode=="reset")return h+'<div class="card stack"><b>Choose a new password</b><div>Enter the 6-digit code from your email and your new password.</div><input id="fc" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code" style="text-align:center;letter-spacing:.35em;font-size:1.2rem"><input id="fp" type="password" autocomplete="new-password" placeholder="New password (6+ characters)"><input id="fp2" type="password" autocomplete="new-password" placeholder="Repeat new password"><div id="aerr" class="dn" role="alert"></div><button class="p" data-act="freset">Change password</button></div><button data-act="tforgot">Send a new code</button>'+bk;
+ return h+'<div class="card stack"><input id="ae" autocomplete="username" autocapitalize="none" autocorrect="off" placeholder="Email address"><input id="apw" type="password" autocomplete="current-password" placeholder="Password"><div id="aerr" class="dn" role="alert"></div><button class="p" data-act="login">Sign in</button></div><button data-act="tforgot">Forgot password?</button>'+(AUTH.open===false?'<small>Sign-ups are closed. Ask the owner for a login.</small>':'<button data-act="tup">Create an account</button>')}
+
+/* ---- profit and loss by party and by item (Settings -> Profit & loss) ---- */
+var PR={range:"month",view:"party",open:""};
+function prRange(){var n=new Date(),y=n.getFullYear(),m=n.getMonth(),r=PR.range;
+ if(r=="month")return [iso(new Date(y,m,1)),iso(new Date(y,m+1,0))];
+ if(r=="last")return [iso(new Date(y,m-1,1)),iso(new Date(y,m,0))];
+ if(r=="year")return [y+"-01-01",y+"-12-31"];
+ return ["0000-00-00","9999-99-99"]}
+function prMargin(){
+ if(prefs.pm!=null&&prefs.pm!==""&&!isNaN(prefs.pm))return +prefs.pm;
+ var s=0,c=0;S.docs.forEach(function(d){if(d.type=="sale"&&d.lines&&d.lines.length)d.lines.forEach(function(l){if(l.cost>0){s+=l.qty*l.price;c+=l.qty*l.cost}})});
+ if(s>0)return Math.round((s-c)/s*1000)/10;
+ var n=0,t=0;S.items.forEach(function(i){if(i.sell>0&&i.buy>0){t+=(i.sell-i.buy)/i.sell;n++}});
+ return n?Math.round(t/n*1000)/10:0}
+function prData(){
+ var rg=prRange(),m=prMargin(),D={p:{},i:{},s:0,c:0,es:0,ec:0,skip:0,ss:0,m:m};
+ S.docs.forEach(function(d){if(d.type!="sale"||d.date<rg[0]||d.date>rg[1])return;
+  var pk=d.partyId||d.partyName,pp=function(){return D.p[pk]||(D.p[pk]={name:(find(S.parties,d.partyId)||{}).name||d.partyName,s:0,c:0,e:0,sub:{}})};
+  if(!d.lines||!d.lines.length){D.skip++;D.ss+=d.total;
+   if(m>0){var ec=d.total*(1-m/100),q=pp();q.s+=d.total;q.c+=ec;q.e+=d.total;D.es+=d.total;D.ec+=ec}
+   return}
+  var P=pp();
+  d.lines.forEach(function(l){
+   var rv=l.qty*l.price,cs=l.qty*(l.cost||0),ik=l.itemId||l.name,ii=D.i[ik]||(D.i[ik]={name:(find(S.items,l.itemId)||{}).name||l.name,s:0,c:0,q:0,sub:{}});
+   P.s+=rv;P.c+=cs;ii.s+=rv;ii.c+=cs;ii.q+=l.qty;D.s+=rv;D.c+=cs;
+   var a=P.sub[ik]||(P.sub[ik]={name:ii.name,s:0,c:0,q:0});a.s+=rv;a.c+=cs;a.q+=l.qty;
+   var b=ii.sub[pk]||(ii.sub[pk]={name:P.name,s:0,c:0,q:0});b.s+=rv;b.c+=cs;b.q+=l.qty})});
+ return D}
+function prMg(o){return o.s?Math.round((o.s-o.c)/o.s*1000)/10:0}
+function prAmt(f){return (f<0?"Loss ":"")+money(Math.abs(f))}
+function prRow(o,k,kind){
+ var f=o.s-o.c,id=kind+k,est=o.e>0,h='<div class="card"><div class="row" data-act="propen" data-id="'+esc(id)+'" style="cursor:pointer"><b>'+esc(o.name)+'</b><b class="'+(f>=0?"up":"dn")+'">'+(est?"≈ ":"")+prAmt(f)+'</b></div><small>Sales '+money(o.s)+' · Cost '+money(o.c)+' · '+prMg(o)+'% margin'+(o.q!=null?' · '+o.q+' sold':'')+'</small>';
+ if(est)h+='<small>Includes '+money(o.e)+' of bills without item details (estimated)</small>';
+ if(PR.open==id){
+  var ks=Object.keys(o.sub).sort(function(a,b){return (o.sub[b].s-o.sub[b].c)-(o.sub[a].s-o.sub[a].c)});
+  h+='<div style="margin-top:6px">'+ks.map(function(x){var u=o.sub[x],g=u.s-u.c;return '<div class="line"><span>'+esc(u.name)+'<small>'+u.q+' × · Sales '+money(u.s)+'</small></span><b class="'+(g>=0?"up":"dn")+'">'+prAmt(g)+'</b></div>'}).join("");
+  if(est){var eg=o.e*prMargin()/100;h+='<div class="line"><span>Bills without item details<small>Estimate · Sales '+money(o.e)+'</small></span><b class="'+(eg>=0?"up":"dn")+'">≈ '+prAmt(eg)+'</b></div>'}
+  h+='</div>'}
+ return h+'</div>'}
+function profitList(){
+ var D=prData(),kind=PR.view=="party"?"p":"i",src=kind=="p"?D.p:D.i,q=(qs.profit||"").trim().toLowerCase(),
+  ks=Object.keys(src).filter(function(k){return !q||src[k].name.toLowerCase().indexOf(q)>=0});
+ ks.sort(function(a,b){return (src[b].s-src[b].c)-(src[a].s-src[a].c)});
+ if(!ks.length){
+  if(kind=="i"&&!q){var nl=0;S.docs.forEach(function(d){if(d.type=="sale"&&d.lines&&d.lines.length)nl++});
+   return '<div class="card stack"><b>No item-wise profit to show</b><div>'+(nl?'No sale bills with items fall in this period. Choose <b>All time</b> above.':'None of your sale bills has item details yet, so profit cannot be split by item. Bills moved in from another app have no items. Add them from an item-wise sale report:')+'</div>'+(nl?'':'<button class="p" data-act="implines">Add items to my bills</button>')+'</div>'}
+  return '<div class="card">Nothing to show for this period.</div>'}
+ return ks.map(function(k){return prRow(src[k],k,kind)}).join("")}
+function vProfit(){
+ var D=prData(),pv=PR.view=="party",S1=D.s+(pv?D.es:0),C1=D.c+(pv?D.ec:0),f=S1-C1,rs=[["month","This month"],["last","Last month"],["year","This year"],["all","All time"]];
+ var h='<a class="back" href="#settings">← Back to Settings</a><h2>Profit &amp; loss</h2><select id="pr-range" style="margin-bottom:10px">'+rs.map(function(r){return '<option value="'+r[0]+'"'+(PR.range==r[0]?" selected":"")+'>'+r[1]+'</option>'}).join("")+'</select>';
+ h+='<div class="two" style="margin-bottom:10px"><button '+(pv?'class="p"':'')+' data-act="prview" data-t="party">By party</button><button '+(pv?'':'class="p"')+' data-act="prview" data-t="item">By item</button></div>';
+ h+='<div class="card"><small>Total '+(f<0?"loss":"profit")+' (sales minus cost of items sold)'+(pv&&D.es>0?" · includes an estimate":"")+'</small><div class="big '+(f>=0?"up":"dn")+'">'+(pv&&D.es>0?"≈ ":"")+prAmt(f)+'</div><small>Sales '+money(S1)+' · Cost '+money(C1)+' · '+prMg({s:S1,c:C1})+'% margin</small></div>';
+ h+='<small style="margin-bottom:8px">Cost is the item\'s buying price when the bill was made. Tap a row to see the details.</small>';
+ if(D.skip){
+  h+='<div class="card stack"><div><b>'+D.skip+' sale bill'+(D.skip==1?"":"s")+' ('+money(D.ss)+')</b> in this period '+(D.skip==1?"has":"have")+' no item details, for example bills moved from another app.'+(pv?(D.m>0?' They are included in <b>By party</b> as an estimate.':' They are left out.'):' They cannot be split by item, so they are not in this list.')+'</div>'+
+   '<div><small>Assumed profit margin for those bills (%). Use 0 to leave them out.</small><input id="pr-m" type="number" step="any" value="'+D.m+'"></div>'+
+   '<small>For exact profit by item, import <b>Sale items</b> (Settings → Import from another app → Sale items) to add the items to those bills.</small></div>'}
+ return h+srch("profit",pv?"Search party":"Search item")+'<div id="lst">'+profitList()+'</div>'}
+var SO={};
+function sp(k,t,d,inner){return '<details class="card" data-sp="'+k+'"'+(SO[k]?" open":"")+'><summary><span>'+t+(d?'<small style="font-weight:400">'+d+'</small>':"")+'</span></summary><div class="stack">'+inner+'</div></details>'}
+function vSettings(){
+ var th=prefs.theme;function tb(v,l){return '<button '+(th==v?'class="p"':'')+' data-act="theme" data-t="'+v+'">'+l+'</button>'}
+ var h='<h2>Settings</h2>'+(VIEWAS?'<div class="note">You are working in <b>'+esc(VIEWAS)+'</b>\'s data. Import, backup, restore and erase below apply to their account.</div><button data-act="uback" style="margin-bottom:10px">← Back to my own data</button>':'');
+ var acc;
+ if(cloudCfg&&user){var loc=0;try{var t=JSON.parse(localStorage.getItem("stockapp_local")||"null");loc=t&&((t.items||[]).length+(t.parties||[]).length+(t.docs||[]).length)}catch(e){}
+  acc='<div>Signed in as <b>'+esc(user.name||user.username)+'</b> ('+(OWN?"owner":"user")+')<small>Your data is private to your account. Sign in with the same username on any device to see it.</small></div>'+(loc?'<button data-act="uplocal">Upload old data from this device</button>':'')+(OWN?'<a class="act b" style="padding:11px 8px;font-size:.95rem" href="#users">Manage users</a>':'')+'<button data-act="signout">Sign out</button>'}
+ else acc='<div>Login is turned off, so your data is saved on this device only.</div>';
+ h+=sp("acc","My account",cloudCfg&&user?"Sign in, sign out and users":"Where your data is saved",acc);
+ h+=sp("biz","Business","Company name and WhatsApp country code",'<div><small>Company name (printed on bills)</small><input id="co" value="'+esc(prefs.co)+'" placeholder="Your Company Name"></div><div><small>Country code for WhatsApp numbers (91 = India)</small><input id="cc" type="tel" inputmode="numeric" value="'+esc(prefs.cc||"91")+'"></div><button data-act="saveco">Save</button>');
+ h+=sp("app","Appearance","Light, dark or automatic",'<div class="three">'+tb("light","Light")+tb("dark","Dark")+tb("auto","Auto")+'</div><small>Auto follows your phone setting.</small>');
+ h+=sp("stk","Stock","Negative stock notice",stockSettings());
+ h+=sp("rem","Payment reminders",remOn()?"On":"Off",remSettings());
+ h+=sp("rep","Reports","Profit and loss",'<a class="act b" style="padding:11px 8px;font-size:.95rem" href="#profit">Profit &amp; loss by party and item</a>');
+ h+=sp("imp","Import data","Move data from another app",'<div>Bring in your items, customers or suppliers from another inventory or billing app.<small>Works with CSV or JSON exports. Nothing you already have is deleted.</small></div><button data-act="impopen">Import from another app</button>');
+ h+=sp("bak","Backup and restore","Download or restore a backup file",'<button data-act="backup">Download backup file</button><button data-act="restore">Restore from backup</button><input type="file" id="rf" accept=".json" style="display:none">');
+ h+=sp("rst","Reset","Erase all data and start again",'<div>Delete all items, customers, suppliers, bills and payments and start again like a new app.<small>This cannot be undone.</small></div><button class="del" data-act="askreset">Erase all data and start fresh</button>');
+ return h}
+document.addEventListener("toggle",function(e){var d=e.target;if(d&&d.dataset&&d.dataset.sp)SO[d.dataset.sp]=d.open},true);
+/* ---- migrate: bring items, customers or suppliers in from another inventory app (CSV or JSON export) ---- */
+var IMP={step:0,kind:"items",cols:[],rows:[],map:{},mode:"skip",file:"",pdir:"in"};
+var IMPF={items:[["name","Item name",1],["buy","Buying price"],["sell","Selling price"],["stock","Stock quantity"],["min","Low-stock alert level"]],
+ parties:[["name","Name",1],["phone","Mobile number (optional)"],["type","Customer or supplier column (optional)"],["bal","Amount they owe you / you owe them (opening balance)"]],
+ lines:[["no","Invoice number"],["item","Item name",1],["qty","Quantity",1],["price","Price per unit"],["amt","Line amount (used if there is no price)"],["cost","Buying price / cost per unit (optional)"],["date","Date (used to find the bill if the invoice number does not match)"],["party","Party name (used together with the date)"]],
+ bills:[["date","Date",1],["party","Party name",1],["phone","Mobile number (optional)"],["no","Invoice / bill number"],["total","Total amount",1],["paid","Amount received"],["paidout","Amount paid (if in a separate column)"],["due","Balance still due"],["btype","Transaction type (Sale, Purchase, Payment-In…)"],["mode","Payment mode"],["note","Description"]]};
+var IMPA={name:["name","item name","item","product","product name","description","item description","particulars","party name","customer name","supplier name","vendor name","customer","supplier","vendor","display name","contact name","company name"],
+ buy:["purchase price","buy price","buying price","cost","cost price","purchase rate","buying rate","unit cost","purchase cost","cost per unit"],
+ sell:["sale price","selling price","sell price","price","rate","mrp","selling rate","unit price","sales price","retail price"],
+ stock:["stock","quantity","qty","current stock","opening stock","closing stock","in stock","stock on hand","on hand","quantity in stock","available quantity","current stock quantity","stock quantity","available stock"],
+ min:["min stock","minimum stock","low stock","reorder level","reorder point","min qty","min stock quantity","low stock alert","minimum stock to maintain","low stock level"],
+ type:["type","party type","contact type","category","party category"],
+ bal:["balance","opening balance","outstanding","closing balance","amount due","receivable","payable","current balance","due","outstanding balance","amount"],
+ date:["date","invoice date","bill date","transaction date","txn date","payment date","date of sale","date of purchase"],
+ party:["party name","party","customer name","supplier name","vendor name","customer","supplier","vendor","name","party s name","parties"],
+ no:["invoice no","invoice number","bill no","bill number","invoice","ref no","reference no","voucher no","receipt no","txn no","invoice no."],
+ total:["total amount","total","grand total","bill amount","invoice amount","amount","net amount","total value","total amt"],
+ paid:["received amount","received","paid","amount received","received paid","amount received paid"],
+ paidout:["paid amount","amount paid","paid amt","paid out"],
+ due:["balance amount","balance","due amount","due","pending amount","pending","balance due","amount due"],
+ btype:["transaction type","type","txn type","voucher type","bill type"],
+ mode:["payment type","payment mode","mode","payment method"],
+ note:["description","remarks","remark","notes","note","narration"],
+ item:["item name","item","product","product name","particulars","item description"],
+ qty:["quantity","qty","item quantity","qty sold","units","quantity sold"],
+ price:["price unit","price per unit","price","rate","unit price","sale price","selling price","rate unit"],
+ amt:["amount","line total","item amount","total amount","total","line amount"],
+ cost:["purchase price","cost price","buying price","cost","unit cost"],
+ phone:["phone no","phone","mobile","mobile no","mobile number","contact no","phone number","contact number","whatsapp"]};
+function impNorm(s){return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}
+function impNum(v){var s=String(v==null?"":v).trim();if(!s)return 0;var neg=s.indexOf("-")>=0||/^\(.*\)$/.test(s),n=parseFloat(s.replace(/[^0-9.]/g,""));if(isNaN(n))return 0;return neg?-n:n}
+function impCSV(t){
+ t=t.replace(/^\uFEFF/,"");var first=t.split(/\r?\n/)[0]||"",d=",",best=0,i,ch;
+ [",",";","\t","|"].forEach(function(c){var n=first.split(c).length;if(n>best){best=n;d=c}});
+ var rows=[],row=[],f="",q=false;
+ for(i=0;i<t.length;i++){ch=t[i];
+  if(q){if(ch=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=ch}
+  else if(ch=='"')q=true;
+  else if(ch==d){row.push(f);f=""}
+  else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&t[i+1]=="\n")i++;row.push(f);f="";rows.push(row);row=[]}
+  else f+=ch}
+ if(f!==""||row.length){row.push(f);rows.push(row)}
+ return rows.filter(function(r){return r.some(function(c){return String(c).trim()!==""})})}
+function impKey(){return IMP.kind=="items"?"items":impTx()?"bills":impLn()?"lines":"parties"}
+function impLoad(text,fname){
+ var cols,rows;
+ if(/\.json$/i.test(fname)||/^\s*[\[{]/.test(text)){
+  var o=JSON.parse(text),pref=impKey()=="items"?["items","products","inventory","stock"]:impKey()=="bills"?["transactions","sales","purchases","invoices","bills","payments"]:impKey()=="lines"?["sales","invoices","items","lines","transactions"]:["parties","customers","suppliers","vendors","contacts"];
+  var f1=function(x,dep){if(Array.isArray(x))return x.length&&x[0]&&typeof x[0]=="object"?x:null;if(!x||typeof x!="object"||dep>2)return null;
+   for(var i=0;i<pref.length;i++){if(x[pref[i]]){var r=f1(x[pref[i]],dep+1);if(r)return r}}
+   for(var k in x){var r2=f1(x[k],dep+1);if(r2)return r2}return null};
+  var arr=f1(o,0);if(!arr)throw new Error("none");
+  var seen={};cols=[];arr.slice(0,100).forEach(function(r){Object.keys(r).forEach(function(k){if(!seen[k]&&(r[k]==null||typeof r[k]!="object")){seen[k]=1;cols.push(k)}})});
+  rows=arr.map(function(r){return cols.map(function(k){return r[k]==null?"":r[k]})})}
+ else{
+  var g=impCSV(text),best=0,bi=0,al=[];IMPF[impKey()].forEach(function(f){al=al.concat(IMPA[f[0]])});
+  for(var i=0;i<Math.min(g.length,15);i++){var n=g[i].filter(function(c){return al.indexOf(impNorm(c))>=0}).length;if(n>best){best=n;bi=i}}
+  cols=g[bi].map(function(c,i){return String(c).trim()||"Column "+(i+1)});rows=g.slice(bi+1)}
+ rows=rows.filter(function(r){return r.some(function(c){return String(c).trim()!==""})});
+ if(!cols.length||!rows.length)throw new Error("empty");
+ IMP.cols=cols;IMP.rows=rows;IMP.file=fname;IMP.map=impGuess();IMP.step=1;impShow()}
+function impGuess(){
+ var fs=IMPF[impKey()],m={},used={},nc=IMP.cols.map(impNorm);
+ fs.forEach(function(f){var al=IMPA[f[0]];for(var i=0;i<nc.length;i++){if(!used[i]&&al.indexOf(nc[i])>=0){m[f[0]]=i;used[i]=1;break}}});
+ fs.forEach(function(f){if(m[f[0]]!=null)return;var al=IMPA[f[0]];
+  for(var i=0;i<nc.length;i++){if(used[i])continue;for(var j=0;j<al.length;j++){if(al[j].indexOf(" ")>0&&nc[i].indexOf(al[j])>=0){m[f[0]]=i;used[i]=1;return}}}});
+ return m}
+function impCell(r,f){var i=IMP.map[f];return i==null?"":r[i]}
+function impPlan(){
+ var P={add:[],upd:[],skip:0,blank:0,ob:0},seen={},isI=IMP.kind=="items",coll=isI?"items":"parties";
+ IMP.rows.forEach(function(r){
+  var nm=String(impCell(r,"name")).trim();if(!nm){P.blank++;return}
+  var key=nm.toLowerCase();if(seen[key]){P.skip++;return}seen[key]=1;var o;
+  if(isI){o={name:nm};["buy","sell","stock","min"].forEach(function(f){if(IMP.map[f]!=null)o[f]=Math.max(0,impNum(r[IMP.map[f]]))})}
+  else{var ty=IMP.kind=="suppliers"?"supplier":"customer",tv=impNorm(impCell(r,"type"));
+   if(tv){if(/supp|vend|purch|creditor/.test(tv))ty="supplier";else if(/cust|client|sale|debtor/.test(tv))ty="customer"}
+   o={name:nm,type:ty};var ph0=IMP.map.phone!=null?String(impCell(r,"phone")).trim():"";if(ph0)o.phone=ph0;var b=impNum(impCell(r,"bal"));if(b>0)o.bal=Math.round(b*100)/100}
+  var ex=S[coll].filter(function(x){return String(x.name).trim().toLowerCase()==key&&(isI||x.type==o.type)})[0];
+  if(ex){if(IMP.mode=="update")P.upd.push({ex:ex,o:o});else P.skip++}
+  else{P.add.push(o);if(o.bal)P.ob++}});
+ return P}
+function impLn(){return IMP.kind=="lines"}
+function invKey(v){v=String(v||"").trim();var m=v.match(/(\d+)\s*$/);return m?"n"+parseInt(m[1],10):"t"+impNorm(v).replace(/ /g,"")}
+function impPlanLn(){
+ var P={groups:{},bills:0,lines:0,nobill:0,had:0,bad:0,nocost:0,mism:0,byp:0,miss:[]},byno={},bykey={},bydp={},byname={};
+ S.docs.forEach(function(d){if(d.type!="sale")return;byno[d.no]=d;var k=invKey(d.no);bykey[k]=bykey[k]?"x":d;
+  var dk=d.date+"|"+impNorm(d.partyName);bydp[dk]=bydp[dk]?"x":d});
+ S.items.forEach(function(i){byname[impNorm(i.name)]=i});
+ IMP.rows.forEach(function(r){
+  var no=String(impCell(r,"no")).trim().replace(/\s+/g,""),nm=String(impCell(r,"item")).trim().replace(/\s+/g," "),qty=impNum(impCell(r,"qty")),d=null;
+  if(!nm||qty<=0){P.bad++;return}
+  if(no){d=byno["S-"+(/^\d+$/.test(no)?no.padStart(4,"0"):no)]||byno[no];if(!d){var kk=bykey[invKey(no)];if(kk&&kk!="x")d=kk}}
+  if(!d&&IMP.map.date!=null&&IMP.map.party!=null){var c2=bydp[impDate(impCell(r,"date"))+"|"+impNorm(impCell(r,"party"))];if(c2&&c2!="x"){d=c2;P.byp++}}
+  if(!d){if(!no&&(IMP.map.date==null||IMP.map.party==null)){P.bad++;return}P.nobill++;if(no&&P.miss.length<3&&P.miss.indexOf(no)<0)P.miss.push(no);return}
+  if(d.lines&&d.lines.length&&!P.groups[d.no]){P.had++;return}
+  var pr=IMP.map.price!=null?impNum(impCell(r,"price")):0;
+  if(pr<=0&&IMP.map.amt!=null)pr=impNum(impCell(r,"amt"))/qty;
+  var it=byname[impNorm(nm)],cost=IMP.map.cost!=null?impNum(impCell(r,"cost")):0;
+  if(cost<=0&&it)cost=it.buy||0;
+  if(cost<=0)P.nocost++;
+  var g=P.groups[d.no]||(P.groups[d.no]={doc:d,lines:[]});
+  g.lines.push({itemId:it?it.id:"",name:it?it.name:nm,qty:qty,price:Math.round(pr*100)/100,cost:cost});P.lines++});
+ Object.keys(P.groups).forEach(function(k){var g=P.groups[k],s=g.lines.reduce(function(a,l){return a+l.qty*l.price},0);P.bills++;if(Math.abs(s-g.doc.total)>1)P.mism++});
+ return P}
+function impPrevLn(){
+ if(IMP.map.item==null||IMP.map.qty==null||(IMP.map.no==null&&(IMP.map.date==null||IMP.map.party==null)))return {ok:0,h:'<div class="note">Choose the item name and quantity columns, and either the invoice number or both the date and party name.</div>'};
+ var P=impPlanLn(),h='<div class="card"><b>'+P.bills+' bill'+(P.bills==1?"":"s")+'</b> will get item details ('+P.lines+' item lines)';
+ h+='<small>Skipped: '+P.nobill+' rows whose bill was not found in your app (import Sales first)'+(P.had?', '+P.had+' rows for bills that already have items':'')+(P.bad?', '+P.bad+' rows with a missing invoice, item or quantity':'')+'.</small>';
+ if(P.byp)h+='<small>'+P.byp+' rows were matched by date and party name instead of invoice number.</small>';
+ if(P.nobill){var ex=S.docs.filter(function(d){return d.type=="sale"&&!(d.lines&&d.lines.length)}).slice(0,3).map(function(d){return d.no});
+  h+='<small style="color:var(--warn)">Not found: '+(P.miss.length?'invoice '+P.miss.map(esc).join(", ")+' in your file':'rows in your file')+'. Your app has bills like '+(ex.length?ex.map(esc).join(", "):"none yet")+'. Check the invoice number column.</small>'}
+ if(P.nocost)h+='<small style="color:var(--warn)">'+P.nocost+' lines have no buying price (item not found in your stock list, or its price is 0), so their profit will look equal to sales. Import Items first and keep the same names.</small>';
+ if(P.mism)h+='<small>'+P.mism+' bills have item totals that differ from the bill total (for example tax or discount). Bill totals are not changed.</small>';
+ return {ok:P.bills>0,h:h+'<small>Your stock does not change. Cost uses each item\'s current buying price unless the file has a cost column.</small></div>'}}
+async function impRunLn(){
+ var P=impPlanLn(),jobs=[];
+ Object.keys(P.groups).forEach(function(k){var g=P.groups[k];jobs.push(["docs",Object.assign({},g.doc,{lines:g.lines,imp:true})])});
+ var tot=jobs.length;await impSave(jobs,function(n){var e=$("#impprog");if(e)e.textContent="Saving… "+n+" of "+tot});
+ $("#modal").style.display="none";toast("Item details added to "+jobs.length+" bill"+(jobs.length==1?"":"s"));render()}
+function impTx(){return IMP.kind=="sales"||IMP.kind=="purchases"||IMP.kind=="txns"}
+function impDate(v){
+ var s=String(v==null?"":v).trim(),m,d,mo,y;if(!s)return "";
+ if(m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/)){y=+m[1];mo=+m[2];d=+m[3]}
+ else if(m=s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/)){d=+m[1];mo=+m[2];y=+m[3];if(y<100)y+=2000;if(mo>12&&d<=12){var t=d;d=mo;mo=t}}
+ else if(m=s.match(/^(\d{1,2})[\s-]([A-Za-z]{3})[a-z]*[\s,-]+(\d{4})/)){d=+m[1];mo="jan feb mar apr may jun jul aug sep oct nov dec".split(" ").indexOf(m[2].toLowerCase())+1;y=+m[3]}
+ else return "";
+ if(!mo||mo>12||d<1||d>31)return "";
+ return y+"-"+String(mo).padStart(2,"0")+"-"+String(d).padStart(2,"0")}
+function impClass(r){
+ var tv=impNorm(impCell(r,"btype")),k=IMP.kind;
+ if(tv){
+  if(/return|credit note|debit note|estimate|quotation|order|challan|expense|journal|opening|adjust/.test(tv))return null;
+  if(/payment out|pay out|paid/.test(tv))return "payout";
+  if(/payment in|pay in|receipt|received/.test(tv))return "payin";
+  if(/purchase|bill/.test(tv))return "purchase";
+  if(/sale|invoice/.test(tv))return "sale";
+  return null}
+ return k=="sales"?"sale":k=="purchases"?"purchase":(IMP.pdir=="out"?"payout":"payin")}
+function impPlanTx(){
+ var P={docs:[],pays:[],parties:[],upd:[],dup:0,other:0,bad:0,blank:0,from:"",to:"",sum:0},k=IMP.kind,pmap={},exDocs={},exPays={},seenDoc={},gen={};
+ S.docs.forEach(function(d){exDocs[d.type+"|"+d.no]=1});
+ S.pays.forEach(function(y){exPays[[y.date,y.partyId,y.amount,y.dir].join("|")]=1});
+ function party(nm,ty,ph){var key=ty+"|"+nm.toLowerCase(),p=pmap[key];
+  if(p){if(ph&&!p.phone)p.phone=ph;return p}
+  p=S.parties.filter(function(x){return x.type==ty&&String(x.name).trim().replace(/\s+/g," ").toLowerCase()==nm.toLowerCase()})[0];
+  if(p){if(ph&&!p.phone){p=Object.assign({},p,{phone:ph});P.upd.push(p)}}
+  else{p={id:uid(),name:nm,type:ty,prices:{}};if(ph)p.phone=ph;P.parties.push(p)}
+  return pmap[key]=p}
+ function genNo(t){if(gen[t]==null)gen[t]=parseInt(nextNo(t).slice(2),10)-1;var x;
+  do{gen[t]++;x=(t=="sale"?"S-":"P-")+String(gen[t]).padStart(4,"0")}while(exDocs[t+"|"+x]||seenDoc[t+"|"+x]);return x}
+ IMP.rows.forEach(function(r,i){
+  var nm=String(impCell(r,"party")).trim().replace(/\s+/g," ");
+  if(!nm){P.blank++;return}
+  var ds=impDate(impCell(r,"date")),ph=IMP.map.phone!=null?String(impCell(r,"phone")).trim():"";if(!ds){P.bad++;return}
+  var cls=impClass(r);if(!cls||(k=="sales"&&cls!="sale")||(k=="purchases"&&cls!="purchase")){P.other++;return}
+  var total=Math.round(impNum(impCell(r,"total"))*100)/100,paidc=(IMP.map.paid!=null||IMP.map.paidout!=null)?Math.max(IMP.map.paid!=null?impNum(impCell(r,"paid")):0,IMP.map.paidout!=null?impNum(impCell(r,"paidout")):0):null,due=IMP.map.due!=null?impNum(impCell(r,"due")):null;
+  var dp=ds.split("-"),ts=new Date(+dp[0],+dp[1]-1,+dp[2],12,0,0).getTime()+i,mode=String(impCell(r,"mode")).trim()||"Cash",note=String(impCell(r,"note")).trim();
+  if(cls=="sale"||cls=="purchase"){
+   if(total<=0){P.bad++;return}
+   var no=String(impCell(r,"no")).trim().replace(/\s+/g,""),pre=cls=="sale"?"S-":"P-",dn=no?pre+(/^\d+$/.test(no)?no.padStart(4,"0"):no):genNo(cls),dk=cls+"|"+dn;
+   if(exDocs[dk]||seenDoc[dk]){P.dup++;return}seenDoc[dk]=1;
+   var p=party(nm,cls=="sale"?"customer":"supplier",ph),paid=0;
+   if(paidc!=null)paid=Math.min(Math.max(paidc,0),total);else if(due!=null)paid=Math.min(Math.max(total-due,0),total);
+   var d={id:uid(),no:dn,type:cls,date:ds,ts:ts,partyId:p.id,partyName:p.name,lines:[],total:total,paid:Math.round(paid*100)/100,mode:mode,imp:true};
+   if(note)d.note=note;P.docs.push(d);P.sum+=total}
+  else{
+   var am=total>0?total:(paidc>0?paidc:0);if(am<=0){P.bad++;return}
+   var pi=cls=="payin",p2=party(nm,pi?"customer":"supplier",ph),pk=[ds,p2.id,am,pi?"in":"out"].join("|");
+   if(exPays[pk]){P.dup++;return}
+   P.pays.push({id:uid(),date:ds,ts:ts,partyId:p2.id,partyName:p2.name,amount:am,mode:mode,billNo:"",dir:pi?"in":"out"});P.sum+=am}
+  if(!P.from||ds<P.from)P.from=ds;if(!P.to||ds>P.to)P.to=ds});
+ return P}
+function impPrevTx(){
+ if(IMP.map.date==null||IMP.map.party==null||IMP.map.total==null)return {ok:0,h:'<div class="note">Choose the date, party name and total amount columns.</div>'};
+ var P=impPlanTx(),sn=P.docs.filter(function(d){return d.type=="sale"}).length,pn=P.docs.length-sn,h='<div class="card">';
+ h+='<b>'+P.docs.length+' bill'+(P.docs.length==1?"":"s")+'</b>'+(P.docs.length?' ('+sn+' sales, '+pn+' purchases)':'')+(IMP.kind=="txns"?' · <b>'+P.pays.length+' payment'+(P.pays.length==1?"":"s")+'</b>':'');
+ if(P.upd.length)h+='<small>'+P.upd.length+' existing customer/supplier name'+(P.upd.length==1?"":"s")+' will get a mobile number.</small>';
+ if(P.parties.length)h+='<small>'+P.parties.length+' new customer/supplier name'+(P.parties.length==1?"":"s")+' will be added.</small>';
+ if(P.from)h+='<small>Dates: '+P.from+' to '+P.to+' · Total '+money(P.sum)+'</small>';
+ h+='<small>Skipped: '+P.dup+' already in your app'+(P.other?', '+P.other+' of other types (returns, orders…)':'')+(P.bad?', '+P.bad+' with a missing date or amount':'')+(P.blank?', '+P.blank+' rows without a party (totals, blanks)':'')+'.</small>';
+ if(IMP.kind!="txns"||P.docs.length){if(IMP.map.paid==null&&IMP.map.paidout==null&&IMP.map.due==null)h+='<small style="color:var(--warn)">No paid or balance column chosen, so every bill will be marked unpaid.</small>'}
+ if(P.docs.length&&P.pays.length)h+='<small style="color:var(--warn)">If the bills\' paid amounts already include these payments, they will be counted twice. Import only one of the two.</small>';
+ if(P.docs.length)h+='<small>Bills are saved without item lines, so your stock does not change. Import Items to set stock.</small>';
+ return {ok:P.docs.length+P.pays.length>0,h:h+'</div>'}}
+async function impRunTx(){
+ var P=impPlanTx(),jobs=[];
+ P.parties.forEach(function(p){jobs.push(["parties",p])});P.upd.forEach(function(p){jobs.push(["parties",p])});P.docs.forEach(function(d){jobs.push(["docs",d])});P.pays.forEach(function(y){jobs.push(["pays",y])});
+ var tot=jobs.length;await impSave(jobs,function(n){var e=$("#impprog");if(e)e.textContent="Saving… "+n+" of "+tot});
+ $("#modal").style.display="none";toast("Imported "+P.docs.length+" bill"+(P.docs.length==1?"":"s")+(P.pays.length?", "+P.pays.length+" payments":""));render()}
+function impPrevHtml(){
+ if(impTx())return impPrevTx();
+ if(impLn())return impPrevLn();
+ var P=impPlan(),isI=IMP.kind=="items",h="";
+ if(IMP.map.name==null)return {ok:0,h:'<div class="note">Choose which column holds the name.</div>'};
+ h+='<div class="card"><b>'+P.add.length+' new</b>'+(P.upd.length?', <b>'+P.upd.length+' to update</b>':'')+'<small>'+P.skip+' skipped (already in your app, or repeated in the file)'+(P.blank?', '+P.blank+' rows without a name ignored':'')+'.</small>';
+ if(P.ob)h+='<small>'+P.ob+' will get an opening balance entry.</small>';
+ var ex=P.add.slice(0,3).map(function(o){return esc(o.name)+(isI?" · sell "+money(o.sell||0)+" · stock "+(o.stock||0):" · "+o.type+(o.bal?" · owes "+money(o.bal):""))});
+ if(ex.length)h+='<small>Example: '+ex.join(" | ")+'</small>';
+ if(P.upd.length)h+='<small style="color:var(--warn)">Updating replaces the saved '+(isI?"prices and stock":"details")+' of those '+P.upd.length+' with the file\'s values.</small>';
+ return {ok:P.add.length+P.upd.length>0,h:h+'</div>'}}
+function impView(){
+ var k=IMP.kind,h='<div class="sheet stack">';
+ if(IMP.step==0){
+  var kb=function(v,l,w){return '<button '+(k==v?'class="p"':'')+(w?' style="grid-column:1/-1"':'')+' data-act="impkind" data-t="'+v+'">'+l+'</button>'};
+  var hint={items:"Your stock list: name, prices and quantity.",sales:"A sale report or invoice list (date, party, invoice no, total, received).",purchases:"A purchase report or bill list (date, supplier, bill no, total, paid).",txns:"An all-transactions report (sales, purchases, payment-in, payment-out), or a payments-only report.",lines:"An item-wise sale report: invoice number, item name, quantity and price. It adds items to sale bills you already imported, so profit by item and party can be shown.",customers:"Customer names, mobile numbers, and an optional balance they owe you.",suppliers:"Supplier names, with an optional balance you owe them."}[k];
+  return h+'<h2 style="margin:0">Move data from another app</h2><div>1. In your old app, export the report as a <b>CSV</b> (or JSON) file.<br>2. Pick what the file contains, then choose it here.<small>Excel file? Open it and use Save As → CSV. Best order: Items, then Sales, Purchases, Transactions, then Sale items.</small></div><div class="two">'+kb("items","Items")+kb("sales","Sales")+kb("purchases","Purchases")+kb("txns","Transactions")+kb("lines","Sale items",1)+kb("customers","Customers")+kb("suppliers","Suppliers")+'</div><small>'+hint+'</small><input type="file" id="impf" accept=".csv,.tsv,.txt,.json" style="display:none"><button class="p" data-act="impfile">Choose file</button><button data-act="closem">Cancel</button></div>'}
+ h+='<h2 style="margin:0">Match the columns</h2><small>'+esc(IMP.file)+' · '+IMP.rows.length+' rows. Check each match; change any that are wrong.</small>';
+ IMPF[impKey()].forEach(function(f){
+  var o='<option value="">— not in file —</option>'+IMP.cols.map(function(c,i){return '<option value="'+i+'"'+(IMP.map[f[0]]===i?" selected":"")+'>'+esc(c)+'</option>'}).join("");
+  h+='<div><small>'+f[1]+(f[2]?" *":"")+'</small><select id="imp-'+f[0]+'">'+o+'</select></div>'});
+ if(impLn())h+='<small>Only bills already in your app get items. Bills that already have items are skipped, so importing twice is safe.</small>';
+ else if(!impTx())h+='<div><small>If a name already exists</small><select id="imp-mode"><option value="skip"'+(IMP.mode=="skip"?" selected":"")+'>Skip it (keep what I have)</option><option value="update"'+(IMP.mode=="update"?" selected":"")+'>Update it from the file</option></select></div>';
+ else{if(k=="txns")h+='<div><small>Rows with no transaction type are</small><select id="imp-pdir"><option value="in"'+(IMP.pdir=="in"?" selected":"")+'>Money received from customers</option><option value="out"'+(IMP.pdir=="out"?" selected":"")+'>Money paid to suppliers</option></select></div>';
+  h+='<small>Bills already in your app (same type and number) are skipped, so importing twice is safe.</small>'}
+ h+='<div id="impprev"></div><div id="impprog"></div><button class="p" id="impgo" data-act="impgo">Import</button><button data-act="impback">Back</button><button data-act="closem">Cancel</button></div>';
+ return h}
+function impRefresh(){var p=$("#impprev");if(!p)return;var r=impPrevHtml();p.innerHTML=r.h;var g=$("#impgo");if(g)g.disabled=!r.ok}
+function impShow(){$("#modal").innerHTML=impView();$("#modal").style.display="block";if(IMP.step==1)impRefresh()}
+async function impSave(jobs,prog){
+ jobs.forEach(function(j){var l=S[j[0]],i=l.findIndex(function(x){return x.id==j[1].id});if(i<0)l.push(j[1]);else l[i]=j[1]});
+ if(!db){saveLocal();return}
+ for(var i=0;i<jobs.length;i+=200){
+  var ch=jobs.slice(i,i+200).map(function(j){j[1]._u=nowu();return {coll:j[0],id:j[1].id,data:j[1]}});
+  try{await api("data",{op:"save",recs:ch})}catch(e){toast("Could not save: "+e.message);refresh();throw e}
+  if(prog)prog(Math.min(jobs.length,i+200))}}
+async function impRun(){
+ if(impTx())return impRunTx();
+ if(impLn())return impRunLn();
+ var P=impPlan(),isI=IMP.kind=="items",coll=isI?"items":"parties",jobs=[],today=iso(new Date());
+ P.add.forEach(function(o){var id=uid(),bal=o.bal,rec;delete o.bal;
+  if(isI)rec=Object.assign({id:id,buy:0,sell:0,stock:0,min:0},o);else rec=Object.assign({id:id,prices:{}},o);
+  jobs.push([coll,rec]);
+  if(bal){var cu=rec.type=="customer";jobs.push(["docs",{id:uid(),no:cu?"S-OB":"P-OB",type:cu?"sale":"purchase",date:today,ts:Date.now(),partyId:id,partyName:rec.name,lines:[],total:bal,paid:0,mode:"Cash",note:"Opening balance"}])}});
+ P.upd.forEach(function(u){delete u.o.bal;jobs.push([coll,Object.assign({},u.ex,u.o)])});
+ var tot=jobs.length;
+ await impSave(jobs,function(n){var e=$("#impprog");if(e)e.textContent="Saving… "+n+" of "+tot});
+ $("#modal").style.display="none";toast("Imported "+P.add.length+" new"+(P.upd.length?", updated "+P.upd.length:""));render()}
+function importAll(o){var jobs=[];["items","parties","docs","pays","adjs"].forEach(function(c){(o[c]||[]).forEach(function(x){if(x&&x.id)jobs.push([c,x])})});return impSave(jobs)}
+function detach(){clearInterval(pollT);pollT=null}
+function clearAll(){db=null;ready=0;cur={t:0,id:""};COLS.forEach(function(c){S[c]=[]});draft={sale:[],purchase:[]}}
+function applyRecs(recs){var ch=0;
+ recs.forEach(function(x){if(!S[x.coll])return;
+  if(x.del){var n0=S[x.coll].length;S[x.coll]=S[x.coll].filter(function(y){return y.id!=x.id});if(S[x.coll].length!=n0)ch=1;return}
+  var d=x.data;if(!d)return;var c=find(S[x.coll],x.id);if(c&&c._u&&d._u&&c._u>d._u)return;
+  var i=S[x.coll].findIndex(function(y){return y.id==x.id});if(i<0)S[x.coll].push(d);else S[x.coll][i]=d;ch=1});
+ return ch}
+async function pull(full){
+ var ch=0,n=0;
+ for(;;){var r=await api("data?t="+cur.t+"&id="+encodeURIComponent(cur.id));
+  if(applyRecs(r.recs))ch=1;n+=r.recs.length;cur=r.cursor;OWN=r.me.role=="owner";
+  if(full){loadMsg="Loading your data… "+n+" records";render()}
+  if(!r.more)break}
+ return ch}
+async function refresh(){if(!db||polling)return;polling=1;try{if(await pull(0))rr()}catch(e){}polling=0}
+async function attach(u){
+ detach();db={uid:u.username};ready=0;cur={t:0,id:""};COLS.forEach(function(c){S[c]=[]});loadMsg="";render();
+ try{await pull(1);ready=1;render()}
+ catch(e){if(A=="in"){A="error";loadErr=e.message}render();return}
+ pollT=setInterval(function(){if(document.visibilityState=="visible")refresh()},8000)}
+function initAuth(){
+ if(!cloudCfg){startLocal();return}
+ var me=null;try{TOK=localStorage.getItem("stockapp_token")||"";me=JSON.parse(localStorage.getItem("stockapp_me")||"null")}catch(e){}
+ document.addEventListener("visibilitychange",function(){if(document.visibilityState=="visible")refresh()});
+ window.addEventListener("online",refresh);
+ if(TOK&&me){user=me;OWN=me.role=="owner";A="in";attach(me)}else{TOK="";A="out";render();api("signup").then(function(r){AUTH.open=r.open;render()}).catch(function(){})}}
+var AUTH={
+ mode:"in",open:null,vu:"",vm:"",fid:"",
+ tforgot:function(){AUTH.mode="forgot";render()},
+ tcode:function(){var i=$("#fi");AUTH.fid=i?i.value.trim().toLowerCase():AUTH.fid;if(!AUTH.fid)return aerr("Enter your username or email first.");AUTH.mode="reset";render()},
+ tup:function(){AUTH.mode="up";render()},
+ tin:function(){AUTH.mode="in";render()},
+ signup:async function(b){var n=$("#sn").value.trim(),em=$("#se").value.trim().toLowerCase(),e=em,p=$("#apw").value,p2=$("#apw2").value;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em))return aerr("Enter a valid email address.");
+  if(!p)return aerr("Choose a password.");if(p!=p2)return aerr("Passwords do not match.");
+  b.disabled=true;
+  try{var r=await api("signup",{name:n,username:e,email:em,password:p});AUTH.vu=e;AUTH.vm=r.email||em;AUTH.mode="verify";render();setTimeout(function(){anote("Code sent. Check your email.")},0)}
+  catch(x){aerr(x.message);b.disabled=false}},
+ everify:async function(b){var c=($("#vc").value||"").replace(/\D/g,"");if(c.length!=6)return aerr("Enter the 6-digit code.");
+  b.disabled=true;
+  try{var vr=await api("signup",{op:"verify",username:AUTH.vu,code:c});var u=AUTH.vu;AUTH.mode="in";render();setTimeout(function(){anote(vr&&vr.pending===false?"Email verified. You can sign in now with your password.":"Email verified. You can sign in after the owner approves your account.");var x=$("#ae");if(x)x.value=u},0)}
+  catch(x){aerr(x.message);b.disabled=false}},
+ eresend:async function(b){b.disabled=true;try{await api("signup",{op:"resend",username:AUTH.vu});anote("A new code was sent.")}catch(x){aerr(x.message)}b.disabled=false},
+ fsend:async function(b){var i=($("#fi").value||"").trim().toLowerCase();if(!i)return aerr("Enter your username or email.");
+  b.disabled=true;
+  try{await api("reset",{op:"request",identity:i});AUTH.fid=i;AUTH.mode="reset";render();setTimeout(function(){anote("If this account has an email, a 6-digit code was sent. It works for 10 minutes.")},0)}
+  catch(x){aerr(x.message);b.disabled=false}},
+ freset:async function(b){var c=($("#fc").value||"").replace(/\D/g,""),p=$("#fp").value,p2=$("#fp2").value;
+  if(c.length!=6)return aerr("Enter the 6-digit code.");if(p.length<6)return aerr("Password must be at least 6 characters.");if(p!=p2)return aerr("Passwords do not match.");
+  b.disabled=true;
+  try{await api("reset",{op:"confirm",identity:AUTH.fid,code:c,password:p});var id=AUTH.fid;AUTH.mode="in";render();setTimeout(function(){anote("Password changed. Sign in with your new password.");var x=$("#ae");if(x)x.value=id},0)}
+  catch(x){aerr(x.message);b.disabled=false}},
+ reload:function(){location.reload()},
+ login:async function(b){var e=$("#ae").value.trim().toLowerCase(),p=$("#apw").value;if(!e||!p)return aerr("Enter your username and password.");
+  b.disabled=true;
+  try{var r=await api("login",{username:e,password:p});TOK=r.token;user={username:r.username,name:r.name,role:r.role};OWN=r.role=="owner";
+   try{localStorage.setItem("stockapp_token",TOK);localStorage.setItem("stockapp_me",JSON.stringify(user))}catch(x){}
+   A="in";attach(user)}
+  catch(x){if(x.code=="unverified"){AUTH.vu=e;AUTH.vm=e.indexOf("@")>0?e:"";AUTH.mode="verify";render();setTimeout(function(){anote(AUTH.vu?"Your email is not verified yet. Tap Resend code to get a new code.":"Your email is not verified yet. Tap Resend code to verify it.")},0);return}
+   aerr(x.message);b.disabled=false}},
+ out:function(msg){VIEWAS="";TOK="";user=null;OWN=true;try{localStorage.removeItem("stockapp_token");localStorage.removeItem("stockapp_me")}catch(x){}
+  detach();clearAll();A="out";render();if(msg&&typeof msg=="string")setTimeout(function(){aerr(msg)},0)},
+ signout:function(){AUTH.out()},
+ uplocal:async function(){var t=JSON.parse(localStorage.getItem("stockapp_local")||"{}");await importAll(t);localStorage.removeItem("stockapp_local");toast("Old data uploaded");render()}
+};
+document.addEventListener("keydown",function(e){if(e.key=="Enter"&&/^(ae|apw|apw2|sn|se|vc|fi|fc|fp|fp2)$/.test(e.target.id)){var b=document.querySelector('#app button.p');if(b)b.click()}});
+/* ---- owner only: manage users ---- */
+var UM={list:null,open:true};
+async function loadUsers(){try{var r=await api("users");UM.list=r.users;UM.open=r.signups}catch(e){UM.list=[];toast(e.message)}render()}
+function vUsers(){
+ var h='<a class="back" href="#settings">← Back to Settings</a><h2>Users</h2><small style="margin-bottom:10px">Every user has their own separate data (items, people, bills, payments). They can import from another app, back up, restore and erase only their own data. You can open, back up, restore or erase the data of any user from here. Only you can manage users.</small>';
+ h+='<div class="card stack"><b>Add a user</b><input id="un" placeholder="Name (optional)"><input id="uu" autocapitalize="none" autocorrect="off" placeholder="Username (letters and numbers)"><input id="ue" type="email" autocapitalize="none" autocorrect="off" placeholder="Email (optional, for forgot password)"><input id="up" placeholder="Password (6+ characters)" autocapitalize="none" autocorrect="off"><button class="p" data-act="uadd">Add user</button></div>';
+ if(UM.list==null){loadUsers();return h+'<div class="card">Loading…</div>'}
+ h+='<div class="card stack"><div class="row"><b>Public sign-ups</b><small style="display:inline">'+(UM.open?"open":"closed")+'</small></div><button data-act="usignups" data-o="'+(UM.open?0:1)+'">'+(UM.open?"Stop new sign-ups":"Allow sign-ups")+'</button></div>';
+ var pend=UM.list.filter(function(u){return u.pending});
+ if(pend.length)h+='<h3>Waiting for approval ('+pend.length+')</h3>'+pend.map(function(u){return '<div class="card stack"><div class="row"><b>'+esc(u.name||u.username)+'</b><small style="display:inline">'+esc(u.username)+'</small></div><div class="two"><button class="p" data-act="uapprove" data-u="'+esc(u.username)+'">Approve</button><button class="del" data-act="urmgo" data-u="'+esc(u.username)+'">Reject</button></div></div>'}).join("");
+ var unv=UM.list.filter(function(u){return u.unverified});
+ if(unv.length)h+='<h3>Email not verified ('+unv.length+')</h3>'+unv.map(function(u){return '<div class="card stack"><div class="row"><b>'+esc(u.name||u.username)+'</b><small style="display:inline">'+esc(u.username)+'</small></div><small>'+esc(u.email||"")+' · waiting for them to enter the emailed code</small><button class="del" data-act="urmgo" data-u="'+esc(u.username)+'">Remove</button></div>'}).join("");
+ var appr=UM.list.filter(function(u){return !u.pending&&!u.unverified});
+ if(!appr.length)return h+'<div class="card">No approved users yet.</div>';
+ return h+appr.map(function(u){return '<div class="card stack"><div class="row"><b>'+esc(u.name||u.username)+'</b><small style="display:inline">'+esc(u.username)+(u.disabled?" · disabled":"")+' · '+(u.records||0)+' records</small></div><small>'+(u.email?esc(u.email):"No email: they cannot use Forgot password")+'</small><button class="p" data-act="uopen" data-u="'+esc(u.username)+'">Open their data</button><div class="two"><button data-act="upw" data-u="'+esc(u.username)+'">Change password</button><button data-act="utoggle" data-u="'+esc(u.username)+'" data-d="'+(u.disabled?0:1)+'">'+(u.disabled?"Enable":"Disable")+'</button></div><button data-act="uem" data-u="'+esc(u.username)+'" data-e="'+esc(u.email||"")+'">'+(u.email?"Change email":"Set email")+'</button><div class="two"><button class="del" data-act="uerase" data-u="'+esc(u.username)+'">Erase their data</button><button class="del" data-act="urm" data-u="'+esc(u.username)+'">Remove user</button></div></div>'}).join("")}
+var UA={
+ uem:function(b){var u=b.dataset.u;$("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Email for '+esc(u)+'</h2><div>Used for Forgot password codes.<small>Leave empty to remove the email.</small></div><input id="nem" type="email" autocapitalize="none" autocorrect="off" value="'+esc(b.dataset.e||"")+'" placeholder="name@example.com"><button class="p" data-act="uemgo" data-u="'+esc(u)+'">Save email</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block"},
+ uemgo:async function(b){b.disabled=true;try{await api("users",{op:"setemail",username:b.dataset.u,email:($("#nem").value||"").trim()});$("#modal").style.display="none";UM.list=null;toast("Email saved");render()}catch(e){toast(e.message);b.disabled=false}},
+ uopen:function(b){VIEWAS=b.dataset.u;location.hash="#home";attach(user)},
+ uback:function(){VIEWAS="";location.hash="#home";attach(user)},
+ uerase:function(b){var u=b.dataset.u;$("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Erase their data?</h2><div>This deletes every item, customer, supplier, bill and payment of <b>'+esc(u)+'</b>. Their account stays.<small>This cannot be undone. Open their data and download a backup first if you may need it.</small></div><button class="dbtn" data-act="uerasego" data-u="'+esc(u)+'">Yes, erase their data</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block"},
+ uerasego:async function(b){b.disabled=true;try{await api("users",{op:"erasedata",username:b.dataset.u});$("#modal").style.display="none";UM.list=null;toast("Their data was erased");render()}catch(e){toast(e.message);b.disabled=false}},
+ uapprove:async function(b){try{await api("users",{op:"approve",username:b.dataset.u});toast("User approved");UM.list=null;render()}catch(e){toast(e.message)}},
+ usignups:async function(b){try{await api("users",{op:"signups",open:b.dataset.o=="1"});UM.list=null;render()}catch(e){toast(e.message)}},
+ uadd:async function(b){var u=$("#uu").value.trim(),pw=$("#up").value,n=$("#un").value.trim();if(!u||!pw)return toast("Enter a username and password");
+  b.disabled=true;try{await api("users",{op:"create",username:u,password:pw,name:n,email:($("#ue").value||"").trim()});toast("User added");UM.list=null;render()}catch(e){toast(e.message);b.disabled=false}},
+ upw:function(b){var u=b.dataset.u;$("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Change password</h2><div>User: <b>'+esc(u)+'</b><small>They will be signed out on every device.</small></div><input id="npw" placeholder="New password (6+ characters)" autocapitalize="none" autocorrect="off"><button class="p" data-act="upwgo" data-u="'+esc(u)+'">Save password</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block"},
+ upwgo:async function(b){var pw=$("#npw").value;if(pw.length<6)return toast("Password must be at least 6 characters");b.disabled=true;
+  try{await api("users",{op:"password",username:b.dataset.u,password:pw});$("#modal").style.display="none";toast("Password changed")}catch(e){toast(e.message);b.disabled=false}},
+ utoggle:async function(b){try{await api("users",{op:"disable",username:b.dataset.u,disabled:b.dataset.d=="1"});UM.list=null;render()}catch(e){toast(e.message)}},
+ urm:function(b){var u=b.dataset.u;$("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Remove user?</h2><div>Remove <b>'+esc(u)+'</b>? They can no longer sign in, and all their data is deleted for good.<small>Tip: use "Open their data", then Settings → Download backup file first if you want a copy.</small></div><button class="dbtn" data-act="urmgo" data-u="'+esc(u)+'">Yes, remove</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block"},
+ urmgo:async function(b){b.disabled=true;try{await api("users",{op:"remove",username:b.dataset.u});$("#modal").style.display="none";UM.list=null;toast("User removed");render()}catch(e){toast(e.message);b.disabled=false}}
+};
+/* ---- per-person transactions by date + monthly sales comparison ---- */
+var pf={},openP={},gm="",gc="";
+function txRows(p,f,t){
+ var r=[];
+ S.docs.forEach(function(d){if(d.partyId==p.id)r.push({date:d.date,ts:d.ts||0,d:d})});
+ S.pays.forEach(function(x){if(x.partyId==p.id)r.push({date:x.date,ts:x.ts||0,x:x})});
+ return r.filter(function(r1){return (!f||r1.date>=f)&&(!t||r1.date<=t)}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.ts-b.ts})}
+function vTx(p){
+ var cu=p.type=="customer",o=pf[p.id]||{},f=o.from||"",t=o.to||"",rows=txRows(p,f,t),bill=0,paid=0;
+ var h='<details data-pid="'+p.id+'"'+((openP[p.id]||f||t)?" open":"")+'><summary>All bills and payments</summary><div class="two" style="margin-top:8px"><div><small>From</small><input type="date" data-pf="from" data-id="'+p.id+'" value="'+f+'"></div><div><small>To</small><input type="date" data-pf="to" data-id="'+p.id+'" value="'+t+'"></div></div><small style="margin-top:6px">Pick the same date in both boxes to see one day. Leave both empty to see everything.</small>';
+ if(f||t)h+='<button style="margin-top:8px" data-act="clrdate" data-id="'+p.id+'">Show all dates</button>';
+ h+='<div style="margin-top:10px">';
+ if(!rows.length)h+='<div class="line">No transactions in this period.</div>';
+ rows.forEach(function(r){
+  if(r.d){var d=r.d;bill+=d.total;paid+=d.paid;
+   h+='<div class="line" data-act="bill" data-id="'+d.id+'" style="cursor:pointer"><span>'+d.date+' · '+d.no+'<small>'+(d.paid?(cu?"Received ":"Paid ")+money(d.paid):"Nothing paid yet")+'</small></span><span><b>'+money(d.total)+'</b>'+(canWrite?' <button class="del sm" data-act="askdel" data-k="docs" data-id="'+d.id+'" aria-label="Delete bill">Delete</button>':"")+'</span></div>'}
+  else{var x=r.x;paid+=x.amount;
+   h+='<div class="line"><span>'+x.date+' · '+(cu?"Payment received":"Payment made")+'<small>'+esc(x.mode||"")+(x.billNo?" · for "+esc(x.billNo):"")+'</small></span><span><b class="up">'+money(x.amount)+'</b>'+(canWrite?' <button class="del sm" data-act="askdel" data-k="pays" data-id="'+x.id+'" aria-label="Delete payment">Delete</button>':"")+'</span></div>'}});
+ h+='</div><div class="card" style="margin:10px 0 0"><div class="row"><span>'+(cu?"Sold":"Bought")+'</span><b>'+money(bill)+'</b></div><div class="row"><span>'+(cu?"Received":"Paid")+'</span><b>'+money(paid)+'</b></div><div class="row"><span>Left in this period</span><b class="'+(bill-paid>0?"wa":"")+'">'+money(bill-paid)+'</b></div><div class="row" style="border-top:1px solid var(--ln);margin-top:6px;padding-top:6px"><span>'+(cu?"Total remaining to receive":"Total remaining to pay")+'<small>All dates</small></span><b class="big '+(bal(p)>0?"wa":"")+'">'+money(bal(p))+'</b></div></div></details>';
+ return h}
+function mkey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function mlabel(k){var q=k.split("-");return new Date(+q[0],+q[1]-1,1).toLocaleDateString("en-IN",{month:"short",year:"numeric"})}
+function mopts(sel){var n=new Date(),h="";for(var i=0;i<24;i++){var k=mkey(new Date(n.getFullYear(),n.getMonth()-i,1));h+='<option value="'+k+'"'+(k==sel?" selected":"")+">"+mlabel(k)+"</option>"}return h}
+function short(n){var a=Math.abs(n),s=n<0?"-":"";if(a>=1e7)return s+CUR+(+(a/1e7).toFixed(1))+"Cr";if(a>=1e5)return s+CUR+(+(a/1e5).toFixed(1))+"L";if(a>=1e3)return s+CUR+(+(a/1e3).toFixed(1))+"K";return s+CUR+Math.round(a)}
+function nice(v){var e=Math.pow(10,Math.floor(Math.log(v)/Math.LN10)),f=v/e;return (f<=1?1:f<=2?2:f<=5?5:10)*e}
+function daily(k){
+ var q=k.split("-"),dim=new Date(+q[0],+q[1],0).getDate(),a=[],i;for(i=0;i<dim;i++)a.push(0);
+ S.docs.forEach(function(d){if(d.type=="sale"&&d.date.slice(0,7)==k)a[+d.date.slice(8,10)-1]+=d.total});
+ var c=[],t=0;a.forEach(function(v){t+=v;c.push(t)});
+ var n=new Date();if(mkey(n)==k)c=c.slice(0,n.getDate());
+ return {dim:dim,c:c,t:t}}
+function chart(a,b,la,lb){
+ var W=340,H=200,L=46,R=10,T=10,B=24,xm=Math.max(a.dim,b.dim),top=nice(Math.max(a.t,b.t,1)),i;
+ function X(i){return L+(xm>1?i/(xm-1):0)*(W-L-R)}function Y(v){return T+(1-v/top)*(H-T-B)}
+ var g="";
+ for(i=0;i<=4;i++){var v=top*i/4;g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--ln)"/><text x="'+(L-5)+'" y="'+(Y(v)+3)+'" text-anchor="end">'+short(v)+'</text>'}
+ [1,5,10,15,20,25,30].forEach(function(d){if(d<=xm)g+='<text x="'+X(d-1)+'" y="'+(H-8)+'" text-anchor="middle">'+d+'</text>'});
+ function line(o,st,dash){if(!o.c.length)return"";var p=o.c.map(function(v,j){return X(j)+","+Y(v)}).join(" ");
+  var last=o.c.length-1;return '<polyline fill="none" stroke="'+st+'" stroke-width="2.5" stroke-linejoin="round" '+(dash?'stroke-dasharray="6 4" ':"")+'points="'+p+'"/><circle cx="'+X(last)+'" cy="'+Y(o.c[last])+'" r="3.5" fill="'+st+'"/>'}
+ return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Cumulative sales through the month: '+la+' '+money(a.t)+', '+lb+' '+money(b.t)+'">'+g+line(b,"var(--mu)",1)+line(a,"var(--ac)",0)+'</svg>'}
+function vCompare(){
+ var n=new Date();if(!gm)gm=mkey(n);if(!gc)gc=mkey(new Date(n.getFullYear(),n.getMonth()-1,1));
+ var a=daily(gm),b=daily(gc),la=mlabel(gm),lb=mlabel(gc),sw='display:inline-block;width:22px;height:0;vertical-align:middle;margin-right:8px;';
+ var h='<h3>Sales comparison</h3><div class="card"><div class="two"><div><small>Month</small><select id="gm">'+mopts(gm)+'</select></div><div><small>Compare with</small><select id="gc">'+mopts(gc)+'</select></div></div>';
+ if(!a.t&&!b.t)return h+'<div style="margin-top:12px">No sales in these two months.</div></div>';
+ h+='<div style="margin-top:12px">'+chart(a,b,la,lb)+'</div><small style="text-align:center">Total sales, adding up day by day</small>'+
+ '<div class="line"><span><i style="'+sw+'border-top:3px solid var(--ac)"></i>'+la+'</span><b>'+money(a.t)+'</b></div>'+
+ '<div class="line"><span><i style="'+sw+'border-top:3px dashed var(--mu)"></i>'+lb+'</span><b>'+money(b.t)+'</b></div>';
+ if(gm==gc)h+='<small>Both months are the same. Pick a different month to compare.</small>';
+ else if(!b.t)h+='<small>No sales in '+lb+' to compare with.</small>';
+ else{var pc=(a.t-b.t)/b.t*100;h+='<div class="line"><span>Change</span><b class="'+(pc>=0?"up":"dn")+'">'+(pc>=0?"▲ ":"▼ ")+Math.abs(Math.round(pc))+'% ('+money(a.t-b.t)+')</b></div>'}
+ if(gm==mkey(n)||gc==mkey(n))h+='<small>The current month counts up to today only.</small>';
+ return h+'</div>'}
+document.addEventListener("toggle",function(e){var d=e.target;if(d&&d.dataset&&d.dataset.pid)openP[d.dataset.pid]=d.open},true);
+document.addEventListener("change",function(e){var t=e.target;
+ if(t.dataset&&t.dataset.pf){var id=t.dataset.id,o=Object.assign({},pf[id]);o[t.dataset.pf]=t.value;pf[id]=o;openP[id]=true;render()}
+ else if(t.id=="gm"||t.id=="gc"){if(t.id=="gm")gm=t.value;else gc=t.value;render()}});
+function rr(){var a=document.activeElement;if(a&&/INPUT|SELECT/.test(a.tagName)&&$("#app").contains(a))return;render()}
+
+/* ---- numbers ---- */
+function priceFor(it,p,t){if(!it)return 0;if(p&&p.prices&&p.prices[it.id]!=null)return p.prices[it.id];return t=="sale"?it.sell:it.buy}
+function bal(p){var t=0;S.docs.forEach(function(d){if(d.partyId==p.id)t+=d.total-d.paid});S.pays.forEach(function(x){if(x.partyId==p.id)t-=x.amount});return t}
+function stats(key){var r={s:0,p:0,c:0};S.docs.forEach(function(d){if(d.date.slice(0,7)!=key)return;if(d.type=="sale"){r.s+=d.total;d.lines.forEach(function(l){r.c+=l.qty*l.cost})}else r.p+=d.total});r.f=r.s-r.c;return r}
+function delta(a,b){if(!b)return '<small>No data last month</small>';var p=(a-b)/Math.abs(b)*100;return '<small class="'+(p>=0?"up":"dn")+'">'+(p>=0?"▲ ":"▼ ")+Math.abs(Math.round(p))+"% vs last month ("+money(b)+")</small>"}
+
+/* ---- screens ---- */
+function vHome(){
+ var n=new Date(),cur=stats(iso(n).slice(0,7)),prv=stats(iso(new Date(n.getFullYear(),n.getMonth()-1,1)).slice(0,7));
+ var dim=new Date(n.getFullYear(),n.getMonth()+1,0).getDate(),ps=cur.s/n.getDate()*dim,mg=cur.s?cur.f/cur.s:(prv.s?prv.f/prv.s:0),pf=ps*mg;
+ var rec=0,pay=0;S.parties.forEach(function(p){var b=bal(p);if(p.type=="customer")rec+=b;else pay+=b});
+ var low=S.items.filter(function(i){return i.stock<=i.min}),bills=S.docs.slice().sort(function(a,b){return (b.ts||0)-(a.ts||0)}).slice(0,8);
+ var h=(!S.items.length&&!S.parties.length&&!S.docs.length&&!S.pays.length?'<div class="card stack"><b>Welcome to StockLedger</b><div>Your app is empty and ready to use.<small>1. Add your items in Stock. 2. Add customers and suppliers in People. 3. Tap Sell or Buy to make your first bill.</small></div><button class="p" data-act="impopen">Import from another app</button></div>':"")+'<h2>Today</h2><div class="two"><button class="act" data-act="fab" data-t="sale">Sell</button><button class="act b" data-act="fab" data-t="purchase">Buy</button></div>'+remHome()+'<h3>This month</h3>'+
+ '<div class="card"><small>Sales</small><div class="big">'+money(cur.s)+'</div>'+delta(cur.s,prv.s)+'</div>'+
+ '<div class="card"><small>Purchases</small><div class="big">'+money(cur.p)+'</div>'+delta(cur.p,prv.p)+'</div>'+
+ ('<div class="card"><small>Profit (sales minus cost of items sold)</small><div class="big '+(cur.f>=0?"up":"dn")+'">'+money(cur.f)+'</div>'+delta(cur.f,prv.f)+'</div>'+
+ '<div class="card"><small>Estimated by month end</small><div class="row"><span>Sales <b>'+money(ps)+'</b></span><span>'+(pf>=0?"Profit":"Loss")+' <b class="'+(pf>=0?"up":"dn")+'">'+money(pf)+'</b></span></div></div>')+
+ '<div class="two"><div class="card"><small>Customers owe you</small><b>'+money(rec)+'</b></div><div class="card"><small>You owe suppliers</small><b class="wa">'+money(pay)+'</b></div></div>';
+ h+=vCompare();
+ if(low.length)h+='<h3>Running low</h3><div class="card">'+low.map(function(i){return esc(i.name)+': <b class="low">'+i.stock+"</b> left"}).join("<br>")+'</div>';
+ h+='<h3>Recent bills</h3><div class="card">'+(bills.length?bills.map(function(d){return '<div class="line" data-act="bill" data-id="'+d.id+'" style="cursor:pointer"><span>'+d.no+" · "+esc(d.partyName)+'</span><b>'+money(d.total)+'</b></div>'}).join(""):"No bills yet. Tap Sell or Buy to make your first one.")+'</div>';
+ return h}
+
+function curT(){return (location.hash=="#buy"||location.hash=="#newbuy")?"purchase":"sale"}
+var dm={sale:{date:"",party:"",item:"",paid:"",mode:"Cash"},purchase:{date:"",party:"",item:"",paid:"",mode:"Cash"}};
+var qs={profit:"",items:"",people:"",parties:"",sale:"",buy:""},selP="",selItem="";
+function srch(k,ph){return '<input type="search" autocomplete="off" data-q="'+k+'" placeholder="'+ph+'" value="'+esc(qs[k])+'" style="margin-bottom:10px">'}
+function itemEntries(i){
+ var r=[];
+ S.docs.forEach(function(d){var q=0,pr=0;d.lines.forEach(function(l){if(l.itemId==i.id){q+=l.qty;pr=l.price}});if(q)r.push({date:d.date,ts:d.ts||0,d:d,q:q,pr:pr})});
+ (S.adjs||[]).forEach(function(a){if(a.itemId==i.id)r.push({date:a.date,ts:a.ts||0,a:a})});
+ r.sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:b.ts-a.ts});
+ return r}
+function vItemPage(){
+ var i=selItem&&find(S.items,selItem),bk='<a class="back" href="#items">← Back to Stock</a>';
+ if(!i)return bk+'<div class="card">Item not found.</div>';
+ var r=itemEntries(i),so=0,bo=0,ad=0,rm=0;
+ r.forEach(function(e){if(e.d){if(e.d.type=="sale")so+=e.q;else bo+=e.q}else if(e.a.dir=="add")ad+=e.a.qty;else rm+=e.a.qty});
+ var h=bk+'<h2>'+esc(i.name)+'</h2><div class="card"><div class="row"><span>In stock</span><span class="big '+(i.stock<=i.min?"low":"")+'">'+i.stock+'</span></div><small>Buy '+money(i.buy)+' · Sell '+money(i.sell)+(i.min?" · Warn at "+i.min:"")+'</small></div>'+
+  '<div class="two"><div class="card"><small>Sold</small><b>'+so+'</b></div><div class="card"><small>Bought</small><b>'+bo+'</b></div><div class="card"><small>Stock added by hand</small><b style="color:var(--blu)">'+ad+'</b></div><div class="card"><small>Stock removed by hand</small><b style="color:var(--pur)">'+rm+'</b></div></div><h3>History ('+r.length+')</h3><div class="row" style="justify-content:flex-start;gap:12px;font-size:.75rem;margin-bottom:6px"><span><b style="color:var(--bad)">●</b> Sale</span><span><b style="color:var(--ac)">●</b> Purchase</span><span><b style="color:var(--blu)">●</b> Stock added</span><span><b style="color:var(--pur)">●</b> Stock removed</span></div>';
+ if(!r.length)return h+'<div class="card">No sale, purchase or stock change yet.</div>';
+ h+='<div class="card">';
+ r.slice(0,300).forEach(function(e){
+  if(e.d){var sl=e.d.type=="sale";h+='<div class="line" data-act="bill" data-id="'+e.d.id+'" style="cursor:pointer"><span>'+e.date+' · '+e.d.no+'<small>'+(sl?"Sold to ":"Bought from ")+esc(e.d.partyName)+' · @ '+money(e.pr)+'</small></span><b style="color:var(--'+(sl?"bad":"ac")+')">'+(sl?"−":"+")+e.q+'</b></div>'}
+  else{var a=e.a,adn=a.dir=="add";h+='<div class="line"><span>'+e.date+' · Stock '+(adn?"added":"removed")+'<small>Manual · '+a.before+' → '+a.after+'</small>'+(canWrite?'<small style="margin-top:6px"><button data-act="adjedit" data-id="'+a.id+'" style="padding:4px 10px;min-height:0">Edit</button> <button data-act="adjundo" data-id="'+a.id+'" style="padding:4px 10px;min-height:0">Undo</button></small>':"")+'</span><b style="color:var(--'+(adn?"blu":"pur")+')">'+(adn?"+":"−")+a.qty+'</b></div>'}});
+ return h+'</div>'+(r.length>300?'<small>Showing the latest 300.</small>':"")}
+function itemList(){
+ var q=qs.items.trim().toLowerCase(),l=S.items.filter(function(i){return !q||i.name.toLowerCase().indexOf(q)>=0}),h="";
+ if(!l.length)return '<div class="card">No item matches your search.</div>';
+ l.forEach(function(i){h+='<div class="card"><div class="row" data-act="openitem" data-id="'+i.id+'" style="cursor:pointer"><b>'+esc(i.name)+' <span style="color:var(--ac)">›</span></b><span class="big '+(i.stock<=i.min?"low":"")+'">'+i.stock+'</span></div><small>Buy '+money(i.buy)+' · Sell '+money(i.sell)+'</small>'+'<small data-act="openitem" data-id="'+i.id+'" style="color:var(--ac);font-weight:600;cursor:pointer;margin-top:4px">History ('+itemEntries(i).length+') ›</small>'+''+(canWrite?'<div class="qty" style="margin-top:10px"><button class="rd" data-act="redstock" data-id="'+i.id+'">− Reduce</button><input type="number" min="1" value="1" id="a-'+i.id+'"><button class="ad" data-act="addstock" data-id="'+i.id+'">+ Add</button></div><div style="text-align:right;margin-top:10px"><button class="del" data-act="askdel" data-k="items" data-id="'+i.id+'">Delete item</button></div>':"")+'</div>'});
+ return h}
+function vItems(){
+ var h='<h2>Stock</h2>'+(canWrite?'<details class="card"><summary>+ Add a new item</summary><div class="stack" style="margin-top:10px"><input id="ni" placeholder="Item name"><input id="nb" type="number" step="any" placeholder="Buying price"><input id="ns" type="number" step="any" placeholder="Selling price"><input id="nq" type="number" placeholder="Stock you have now"><input id="nm" type="number" placeholder="Warn me when stock is at or below"><button class="p" data-act="additem">Save item</button></div></details>':"");
+ if(!S.items.length)return h+'<div class="card">No items yet.</div>';
+ return h+srch("items","Search items")+'<div id="lst">'+itemList()+'</div>'}
+
+function vEntry(t){
+ var sale=t=="sale",pl=S.parties.filter(function(p){return p.type==(sale?"customer":"supplier")}),L=draft[t],tot=0,m=dm[t],
+  ps=find(pl,m.party)||pl[0],it0=find(S.items,m.item)||S.items[0],nm=sale?"customer":"supplier";
+ var h='<a class="back" href="#'+(sale?"sale":"buy")+'">← Back to '+(sale?"sales":"purchases")+'</a><h2>'+(sale?"New sale":"New purchase")+'</h2>';
+ h+='<div class="card stack"><div><small>'+(sale?"Customer":"Supplier")+'</small><div class="row" style="flex-wrap:nowrap">'+(pl.length?'<div style="flex:1;min-width:0;display:grid;gap:6px"><input id="psq" type="search" autocomplete="off" placeholder="Type to search '+nm+'"><select id="pt">'+opts(pl,ps&&ps.id)+'</select><small id="psh"></small></div>':'<span style="color:var(--mu)">No '+nm+' yet</span>')+'<button data-act="newparty" data-t="'+nm+'" style="white-space:nowrap">＋ New</button></div></div>'+
+  '<div><small>Bill date (tap to change)</small><input id="pd" type="date" value="'+(m.date||iso(new Date()))+'"></div></div>';
+ h+='<h3>Items</h3><div class="card stack">'+(S.items.length?'<div class="row" style="flex-wrap:nowrap"><div style="flex:1;min-width:0;display:grid;gap:6px"><input id="isq" type="search" autocomplete="off" placeholder="Type to search item"><select id="pi">'+optsItems(S.items,it0&&it0.id)+'</select><small id="ish"></small></div><button data-act="newitem" data-t="'+t+'" style="white-space:nowrap">＋ New item</button></div><div class="two"><input id="pq" type="number" value="1" min="1" placeholder="Qty"><input id="pp" type="number" step="any" value="'+priceFor(it0,ps,t)+'" placeholder="Price"></div><button data-act="addline" data-t="'+t+'">Add to bill</button>':'<div class="row"><span style="color:var(--mu)">No items yet</span><button data-act="newitem" data-t="'+t+'">＋ New item</button></div>')+'</div>';
+ if(L.length){var ns={};L.forEach(function(l){ns[l.itemId]=(ns[l.itemId]||0)+l.qty});h+='<div class="card">';L.forEach(function(l,k){tot+=l.qty*l.price;var si=find(S.items,l.itemId);h+='<div class="line"><span>'+esc(l.name)+'<small>'+l.qty+" × "+money(l.price)+'</small>'+(sale&&si&&si.stock<ns[l.itemId]?'<small class="low">Only '+si.stock+' in stock</small>':"")+'</span><span><b>'+money(l.qty*l.price)+'</b> <button data-act="rmline" data-t="'+t+'" data-n="'+k+'">✕</button></span></div>'});
+  h+='<div class="line"><b>Total</b><b class="big">'+money(tot)+'</b></div></div><div class="card stack"><input id="pa" type="number" step="any" value="'+esc(m.paid)+'" placeholder="'+(sale?"Money received now":"Money paid now")+'"><select id="pmd">'+["Cash","Card","Bank / UPI"].map(function(x){return '<option'+(x==m.mode?" selected":"")+'>'+x+'</option>'}).join("")+'</select><button class="p" data-act="saveentry" data-t="'+t+'">Save and make bill</button></div>'}
+ return h}
+
+function peopleList(){
+ var q=qs.people.trim().toLowerCase(),l=S.parties.filter(function(p){return !q||p.name.toLowerCase().indexOf(q)>=0}),h="";
+ if(!l.length)return '<div class="card">No one matches your search.</div>';
+ l.forEach(function(p){var b=bal(p),ks=Object.keys(p.prices||{}).filter(function(k){return find(S.items,k)}),cu=p.type=="customer";
+  h+='<div class="card"><div class="row" data-act="openp" data-id="'+p.id+'" style="cursor:pointer"><span><b class="nm">'+esc(p.name)+' <span style="color:var(--ac)">›</span></b><small>'+(cu?"Customer":"Supplier")+(b>0?(cu?" · owes you":" · you owe"):" · settled")+' · View bills</small></span><b class="amt '+(b>0?(cu?"owe-in":"owe-out"):"zero")+'">'+money(b)+'</b></div>'+phoneLine(p)+'<div class="row act-row">'+(canWrite?'<button class="tp" data-act="takepay" data-id="'+p.id+'">'+(cu?"Take payment":"Make payment")+'</button> <button class="del sm" data-act="askdel" data-k="parties" data-id="'+p.id+'">Delete</button>':"")+'</div>'+
+  '<details><summary>Special prices ('+ks.length+')</summary>';
+  ks.forEach(function(k){var it=find(S.items,k);h+='<div class="line"><span>'+esc(it.name)+'<small>Standard '+money(cu?it.sell:it.buy)+'</small></span><span><b>'+money(p.prices[k])+'</b>'+(canWrite?' <button data-act="rmprice" data-id="'+p.id+'" data-k="'+k+'">✕</button>':"")+'</span></div>'});
+  if(canWrite&&S.items.length)h+='<div class="stack" style="margin-top:8px"><select id="ps-'+p.id+'">'+opts(S.items)+'</select><input id="pv-'+p.id+'" type="number" step="any" placeholder="Price for '+esc(p.name)+'"><button data-act="setprice" data-id="'+p.id+'">Save price</button></div>';
+  h+='</details></div>'});
+ return h}
+function vPeople(){
+ var h='<div class="ledger"><h2>People</h2><a class="act b" style="padding:11px 8px;font-size:.95rem;margin-bottom:12px" href="#parties">Party details</a>'+(canWrite?'<details class="card"><summary>+ Add a customer or supplier</summary><div class="stack" style="margin-top:10px"><input id="np" placeholder="Name"><input id="nph" type="tel" inputmode="tel" placeholder="Mobile number (optional)"><select id="nt"><option value="customer">Customer</option><option value="supplier">Supplier</option></select><button class="p" data-act="addparty">Save</button></div></details>':"");
+ if(!S.parties.length)return h+'<div class="card">No one added yet.</div></div>';
+ return h+srch("people","Search customer or supplier")+'<div id="lst">'+peopleList()+'</div></div>'}
+
+/* ---- Party details page: one customer or supplier at a time ---- */
+function partyList(){
+ var q=qs.parties.trim().toLowerCase(),h="";
+ [["customer","Customers"],["supplier","Suppliers"]].forEach(function(g){
+  var l=S.parties.filter(function(p){return p.type==g[0]&&(!q||p.name.toLowerCase().indexOf(q)>=0)});
+  if(!l.length)return;h+='<h3>'+g[1]+' ('+l.length+')</h3>';
+  l.forEach(function(p){var b=bal(p),n=S.docs.filter(function(d){return d.partyId==p.id}).length;
+   h+='<div class="card" data-act="openp" data-id="'+p.id+'" style="cursor:pointer"><div class="row"><b>'+esc(p.name)+'</b><b class="'+(b>0?"wa":"")+'">'+money(b)+'</b></div><small>'+(g[0]=="customer"?"Owes you":"You owe")+' · '+n+' bill'+(n==1?"":"s")+' · tap to see transactions</small></div>'})});
+ return h||'<div class="card">'+(S.parties.length?"No one matches your search.":"No one added yet.")+'</div>'}
+function vParties(){
+ var p=selP&&find(S.parties,selP);
+ if(p){var cu=p.type=="customer";
+  return '<a class="back" href="#parties" data-act="backp">← All parties</a><h2>'+esc(p.name)+'</h2><div class="card"><div class="row"><span>'+(cu?"Customer":"Supplier")+'</span><small style="display:inline">'+(cu?"Owes you":"You owe")+' <b class="'+(bal(p)>0?"wa":"")+'">'+money(bal(p))+'</b></small></div>'+phoneLine(p)+(canWrite?'<div class="two" style="margin-top:10px"><button class="p" data-act="takepay" data-id="'+p.id+'">'+(cu?"Take payment":"Make payment")+'</button><button class="tp" style="min-height:46px" data-act="partysale" data-id="'+p.id+'">'+(cu?"Add sale":"Add purchase")+'</button></div>':"")+'</div>'+vTx(p)}
+ selP="";
+ return '<a class="back" href="#people">← Back to People</a><h2>Party details</h2>'+(S.parties.length?srch("parties","Search customer or supplier"):"")+'<div id="lst">'+partyList()+'</div>'}
+var DF={sale:{from:"",to:""},buy:{from:"",to:""}};
+function payIn(x){var py=find(S.parties,x.partyId);return x.dir?x.dir=="in":!!(py&&py.type=="customer")}
+function docBody(t){
+ var k=t=="sale"?"sale":"buy",sale=t=="sale",q=qs[k].trim().toLowerCase(),f=DF[k].from,to=DF[k].to,r=[];
+ S.docs.forEach(function(d){if(d.type==t)r.push({date:d.date,ts:d.ts||0,d:d,name:d.partyName||"",k:d.no})});
+ S.pays.forEach(function(x){if(payIn(x)==sale)r.push({date:x.date,ts:x.ts||0,x:x,name:x.partyName||"",k:x.mode||""})});
+ r=r.filter(function(a){return (!f||a.date>=f)&&(!to||a.date<=to)&&(!q||a.name.toLowerCase().indexOf(q)>=0||String(a.k).toLowerCase().indexOf(q)>=0)});
+ r.sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:b.ts-a.ts});
+ var tot=0,due=0,nb=0;r.forEach(function(a){if(a.d){nb++;tot+=a.d.total;due+=a.d.total-a.d.paid}else due-=a.x.amount});
+ var h='<div class="two"><div class="card"><small>'+(sale?"Total sold":"Total bought")+' · '+nb+' bill'+(nb==1?"":"s")+'</small><b>'+money(tot)+'</b></div><div class="card"><small>'+(sale?"To receive":"To pay")+'</small><b'+(due>0.005?' style="color:var(--warn)"':"")+'>'+money(due)+'</b></div></div>';
+ if(!r.length)return h+'<div class="card">'+(S.docs.some(function(d){return d.type==t})?"Nothing matches.":"No "+(sale?"sales":"purchases")+" yet. Tap the button below to add one.")+'</div>';
+ h+='<div class="card">';
+ r.slice(0,300).forEach(function(a){
+  if(a.d){var d=a.d,pd=d.total-d.paid;
+   h+='<div class="line" data-act="bill" data-id="'+d.id+'" style="cursor:pointer"><span>'+d.date+' · '+d.no+'<small>'+esc(d.partyName)+'</small></span><span style="text-align:right"><b>'+money(d.total)+'</b><small>Paid <b style="color:var(--ac)">'+money(d.paid)+'</b> · '+(pd>0.005?'Due <b style="color:var(--warn)">'+money(pd)+'</b>':"Settled")+'</small></span>'+(canWrite?'<button class="del sm" data-act="askdel" data-k="docs" data-id="'+d.id+'" aria-label="Delete bill">Delete</button>':"")+'</div>'}
+  else{var x=a.x;h+='<div class="line"><span>'+x.date+' · Payment '+(sale?"received":"made")+'<small>'+esc(x.partyName)+(x.mode?" · "+esc(x.mode):"")+(x.billNo?" · for "+esc(x.billNo):"")+'</small></span><span><b style="color:var(--ac)">'+money(x.amount)+'</b>'+(canWrite?' <button class="del sm" data-act="askdel" data-k="pays" data-id="'+x.id+'" aria-label="Delete payment">Delete</button>':"")+'</span></div>'}});
+ return h+'</div>'}
+function vDocPage(t){
+ var sale=t=="sale",k=sale?"sale":"buy";
+ return '<h2>'+(sale?"Sales":"Purchases")+'</h2><div class="card stack">'+srch(k,"Search "+(sale?"customer":"supplier")+" or bill no.").replace(' style="margin-bottom:10px"',"")+'<div class="two"><div><small>From date</small><input type="date" data-tf="from" data-tk="'+k+'" value="'+DF[k].from+'"></div><div><small>To date</small><input type="date" data-tf="to" data-tk="'+k+'" value="'+DF[k].to+'"></div></div></div><div id="lst">'+docBody(t)+'</div><div style="height:64px"></div><button class="fab" data-act="fab" data-t="'+t+'">＋ Add '+(sale?"sale":"purchase")+'</button>'}
+var LST={profit:profitList,items:itemList,people:peopleList,parties:partyList,sale:function(){return docBody("sale")},buy:function(){return docBody("purchase")}};
+document.addEventListener("input",function(e){var t=e.target,k=t.dataset&&t.dataset.q;if(t.id=="pa"){dm[curT()].paid=t.value;return}if(!k)return;qs[k]=t.value;var l=$("#lst");if(l)l.innerHTML=LST[k]()});
+document.addEventListener("change",function(e){var t=e.target;if(t.dataset&&t.dataset.tf){var kk=t.dataset.tk;DF[kk][t.dataset.tf]=t.value;var l=$("#lst");if(l)l.innerHTML=LST[kk]()}});
+
+/* ---- bill as a real PDF file (built in the app, no extra library, works offline) ---- */
+var PW1=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584],
+ PW2=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+function pdfW(s,bd,sz){var w=0,t=bd?PW2:PW1;for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);w+=(c>=32&&c<=126)?t[c-32]:556}return w*sz/1000}
+function pdfClean(s){return String(s==null?"":s).replace(/[\r\n\t]+/g," ").replace(/[^\x20-\x7e\xa0-\xff]/g,"?")}
+function pdfEsc(s){return s.replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)")}
+function pdfRs(n){return "Rs. "+(n<0?"-":"")+Math.abs(Math.round(n*100)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function pdfWrap(s,bd,sz,mx){var L=[],c="";
+ pdfClean(s).split(" ").forEach(function(w){
+  while(w.length>1&&pdfW(w,bd,sz)>mx){var k=w.length-1;while(k>1&&pdfW(w.slice(0,k),bd,sz)>mx)k--;if(c){L.push(c);c=""}L.push(w.slice(0,k));w=w.slice(k)}
+  var t=c?c+" "+w:w;if(c&&pdfW(t,bd,sz)>mx){L.push(c);c=w}else c=t});
+ if(c||!L.length)L.push(c);return L}
+function pdfBuild(pages){
+ var o=[],kids=[],out="%PDF-1.4\n",off=[],i;
+ o[1]="<< /Type /Catalog /Pages 2 0 R >>";
+ o[3]="<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+ o[4]="<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+ pages.forEach(function(c,n){var po=5+n*2,co=po+1;kids.push(po+" 0 R");
+  o[po]="<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents "+co+" 0 R >>";
+  o[co]="<< /Length "+c.length+" >>\nstream\n"+c+"\nendstream"});
+ o[2]="<< /Type /Pages /Kids ["+kids.join(" ")+"] /Count "+pages.length+" >>";
+ for(i=1;i<o.length;i++){off[i]=out.length;out+=i+" 0 obj\n"+o[i]+"\nendobj\n"}
+ var x=out.length;out+="xref\n0 "+o.length+"\n0000000000 65535 f \n";
+ for(i=1;i<o.length;i++)out+=String(off[i]).padStart(10,"0")+" 00000 n \n";
+ out+="trailer\n<< /Size "+o.length+" /Root 1 0 R >>\nstartxref\n"+x+"\n%%EOF";
+ var u=new Uint8Array(out.length);for(i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;
+ return new Blob([u],{type:"application/pdf"})}
+function billPdf(d){
+ var sale=d.type=="sale",lg=d.payLog||[],lgsum=lg.reduce(function(a,y){return a+y.amount},0),due=d.total-d.paid,pages=[],cs="",y=0,L=40,R=555;
+ function np(){if(cs)pages.push(cs);cs="";y=800}
+ function tx(t,x,yy,sz,bd,right){t=pdfClean(t);if(right)x=x-pdfW(t,bd,sz);cs+="BT /"+(bd?"F2":"F1")+" "+sz+" Tf "+x.toFixed(2)+" "+yy.toFixed(2)+" Td ("+pdfEsc(t)+") Tj ET\n"}
+ function ln(yy){cs+="0.8 G 0.5 w "+L+" "+yy.toFixed(2)+" m "+R+" "+yy.toFixed(2)+" l S\n"}
+ function head(){cs+="0.93 g "+L+" "+(y-5)+" "+(R-L)+" 18 re f 0 g\n";tx("Item",L+4,y,10,1);tx("Qty",360,y,10,1,1);tx("Price",450,y,10,1,1);tx("Amount",R-4,y,10,1,1);y-=22}
+ function tot(a,b,bd){tx(a,L+4,y,10,bd);tx(b,R-4,y,10,bd,1);y-=16}
+ np();
+ tx(CO,L,y,18,1);y-=24;
+ tx((sale?"Invoice ":"Purchase bill ")+d.no,L,y,12,1);y-=16;
+ tx("Date: "+d.date,L,y,10);y-=14;
+ tx((sale?"Bill to: ":"Supplier: ")+d.partyName,L,y,10);y-=24;
+ head();
+ var rows=(d.lines&&d.lines.length)?d.lines.map(function(l){return [l.name,String(l.qty),pdfRs(l.price),pdfRs(l.qty*l.price)]}):[[d.note||"Bill amount","","",pdfRs(d.total)]];
+ rows.forEach(function(r){var w=pdfWrap(r[0],0,10,270),h=(w.length-1)*13+18;
+  if(y-h<90){np();head()}
+  w.forEach(function(t,i){tx(t,L+4,y-i*13,10)});
+  tx(r[1],360,y,10,0,1);tx(r[2],450,y,10,0,1);tx(r[3],R-4,y,10,0,1);
+  ln(y-(w.length-1)*13-5);y-=h});
+ if(y<130+lg.length*16)np();
+ y-=6;tot("Total",pdfRs(d.total),1);
+ tot((sale?"Received":"Paid")+(d.mode?" ("+d.mode+")":""),pdfRs(d.paid-lgsum));
+ lg.forEach(function(q){tot((sale?"Received":"Paid")+" later - "+q.date+(q.mode?" ("+q.mode+")":""),pdfRs(q.amount))});
+ ln(y+11);y-=4;tot("Balance due",pdfRs(due),1);
+ y-=14;tx("Thank you!",L+4,y,10);
+ pages.push(cs);return pdfBuild(pages)}
+function pdfFile(d){var nm="Invoice-"+String(d.no).replace(/[^\w.-]+/g,"_")+".pdf",b=billPdf(d);try{return new File([b],nm,{type:"application/pdf"})}catch(e){b.name=nm;return b}}
+function pdfSave(f){var u=URL.createObjectURL(f),a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},60000)}
+async function sharePdf(d){
+ var f=pdfFile(d),sale=d.type=="sale",due=d.total-d.paid,
+  tt=(sale?"Invoice ":"Purchase bill ")+d.no+" from "+CO+"\nTotal: "+money(d.total)+(due>0.005?"\nBalance due: "+money(due):"");
+ if(navigator.canShare&&navigator.canShare({files:[f]})){
+  try{await navigator.share({files:[f],title:(sale?"Invoice ":"Bill ")+d.no,text:tt});return}
+  catch(e){if(e&&e.name=="AbortError")return}}
+ pdfSave(f);var pp=find(S.parties,d.partyId);waOpen(waNum(pp&&pp.phone),tt+"\n(PDF attached)");
+ toast("PDF saved. Attach it in WhatsApp")}
+
+/* ---- bill as a photo (PNG picture) ---- */
+function wrapC(c,t,mx){var L=[],cur="";
+ String(t==null?"":t).split(/\s+/).forEach(function(w){
+  while(w.length>1&&c.measureText(w).width>mx){var k=w.length-1;while(k>1&&c.measureText(w.slice(0,k)).width>mx)k--;if(cur){L.push(cur);cur=""}L.push(w.slice(0,k));w=w.slice(k)}
+  var t2=cur?cur+" "+w:w;if(cur&&c.measureText(t2).width>mx){L.push(cur);cur=w}else cur=t2});
+ if(cur||!L.length)L.push(cur);return L}
+function billImg(d){
+ var sale=d.type=="sale",lg=d.payLog||[],lgsum=lg.reduce(function(a,y){return a+y.amount},0),due=d.total-d.paid,W=900,P=40,F="Arial, Helvetica, sans-serif",
+  cv=document.createElement("canvas"),c=cv.getContext("2d"),rows=(d.lines&&d.lines.length)?d.lines.map(function(l){return [l.name,String(l.qty),money(l.price),money(l.qty*l.price)]}):[[d.note||"Bill amount","","",money(d.total)]];
+ c.font="22px "+F;
+ var wr=rows.map(function(r){return wrapC(c,r[0],370)}),H=P+175+46;
+ wr.forEach(function(w){H+=w.length*28+16});
+ H+=(3+lg.length)*36+110;
+ cv.width=W;cv.height=H;
+ c.fillStyle="#fff";c.fillRect(0,0,W,H);c.textBaseline="alphabetic";
+ function tx(t,x,y,f,col,al){c.font=f+" "+F;c.fillStyle=col||"#111";c.textAlign=al||"left";c.fillText(t,x,y)}
+ function ln(y,col){c.strokeStyle=col||"#ddd";c.lineWidth=1;c.beginPath();c.moveTo(P,y);c.lineTo(W-P,y);c.stroke()}
+ var y=P+34;
+ tx(CO,P,y,"bold 34px");y+=42;
+ tx((sale?"Invoice ":"Purchase bill ")+d.no,P,y,"bold 26px");y+=34;
+ tx("Date: "+d.date,P,y,"22px","#444");y+=30;
+ tx((sale?"Bill to: ":"Supplier: ")+d.partyName,P,y,"22px","#444");y+=34;
+ c.fillStyle="#eee";c.fillRect(P,y,W-2*P,40);y+=28;
+ tx("Item",P+8,y,"bold 22px");tx("Qty",520,y,"bold 22px","#111","right");tx("Price",690,y,"bold 22px","#111","right");tx("Amount",W-P-8,y,"bold 22px","#111","right");y+=18;
+ rows.forEach(function(r,i){y+=28;
+  wr[i].forEach(function(t,k){tx(t,P+8,y+k*28,"22px")});
+  tx(r[1],520,y,"22px","#111","right");tx(r[2],690,y,"22px","#111","right");tx(r[3],W-P-8,y,"22px","#111","right");
+  y+=(wr[i].length-1)*28+10;ln(y);y+=6});
+ y+=14;
+ function tot(a,b,bd){y+=36;tx(a,P+8,y,(bd?"bold ":"")+"22px");tx(b,W-P-8,y,(bd?"bold ":"")+"22px","#111","right")}
+ tot("Total",money(d.total),1);
+ tot((sale?"Received":"Paid")+(d.mode?" ("+d.mode+")":""),money(d.paid-lgsum));
+ lg.forEach(function(q){tot((sale?"Received":"Paid")+" later - "+q.date+(q.mode?" ("+q.mode+")":""),money(q.amount))});
+ y+=10;ln(y,"#999");tot("Balance due",money(due),1);
+ y+=50;tx("Thank you!",P+8,y,"22px","#444");
+ return cv.toDataURL("image/png")}
+function imgFile(d){
+ var u=billImg(d).split(",")[1],b=atob(u),a=new Uint8Array(b.length),i;for(i=0;i<b.length;i++)a[i]=b.charCodeAt(i);
+ var nm="Invoice-"+String(d.no).replace(/[^\w.-]+/g,"_")+".png",bl=new Blob([a],{type:"image/png"});
+ try{return new File([bl],nm,{type:"image/png"})}catch(e){bl.name=nm;return bl}}
+function picText(d){var due=d.total-d.paid;return (d.type=="sale"?"Invoice ":"Purchase bill ")+d.no+" from "+CO+"\nTotal: "+money(d.total)+(due>0.005?"\nBalance due: "+money(due):"")}
+async function sharePic(d){
+ var f=imgFile(d);
+ if(navigator.canShare&&navigator.canShare({files:[f]})){
+  try{await navigator.share({files:[f],title:"Bill "+d.no,text:picText(d)});return}
+  catch(e){if(e&&e.name=="AbortError")return}}
+ pdfSave(f);toast("Photo saved. Attach it in WhatsApp")}
+async function sendPicTo(d,num){
+ var f=imgFile(d),ok=false;
+ try{if(navigator.clipboard&&window.ClipboardItem){await navigator.clipboard.write([new ClipboardItem({"image/png":f})]);ok=true}}catch(e){}
+ if(!ok)pdfSave(f);
+ waOpen(num,picText(d));
+ toast(ok?"Photo copied. Paste it in the WhatsApp chat and send":"Photo saved. Attach it in the WhatsApp chat")}
+function showPicAsk(d,p){
+ $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Send bill photo</h2><div>'+(p?'No mobile number is saved for <b>'+esc(p.name)+'</b>.':'This person is not in your list.')+'<small>Enter a number with or without the country code.</small></div><input id="wph" type="tel" inputmode="tel" placeholder="Mobile number" autocomplete="off"><button class="p" style="background:#1fa855;border-color:#1fa855;color:#fff" data-act="picsave" data-id="'+d.id+'">'+(p?"Save number and send photo":"Send photo")+'</button><button data-act="bill" data-id="'+d.id+'">Back to bill</button></div>';
+ $("#modal").style.display="block";setTimeout(function(){var f=$("#wph");if(f)f.focus()},60)}
+
+/* ---- mobile numbers and WhatsApp bills ---- */
+function waNum(ph){var d=String(ph||"").replace(/\D/g,"").replace(/^0+/,"");if(!d)return "";if(d.length==10)return (prefs.cc||"91")+d;return d.length<8?"":d}
+function waText(d){
+ var sale=d.type=="sale",due=d.total-d.paid,t="*"+CO+"*\n"+(sale?"Invoice ":"Purchase bill ")+d.no+"\nDate: "+d.date+"\n"+(sale?"Bill to: ":"Supplier: ")+d.partyName+"\n";
+ if(d.lines&&d.lines.length){t+="\n";d.lines.forEach(function(l,i){t+=(i+1)+". "+l.name+" - "+l.qty+" x "+money(l.price)+" = "+money(l.qty*l.price)+"\n"})}
+ t+="\n*Total: "+money(d.total)+"*\n"+(sale?"Received: ":"Paid: ")+money(d.paid)+"\n";
+ if(due>0.005)t+="*Balance due: "+money(due)+"*\n";
+ var pp=find(S.parties,d.partyId);if(pp&&sale){var b=bal(pp);if(b>0.005&&Math.abs(b-due)>0.005)t+="Total outstanding: "+money(b)+"\n"}
+ return t+"\nThank you!"}
+function waOpen(n,txt){var a=document.createElement("a");a.href="https://wa.me/"+n+"?text="+encodeURIComponent(txt);a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove()}
+function phoneLine(p){return '<div class="row" style="margin-top:8px"><span>'+(p.phone?esc(p.phone):'<small style="display:inline">No mobile number</small>')+'</span>'+(canWrite?'<button data-act="editph" data-id="'+p.id+'">'+(p.phone?"Edit":"+ Add mobile")+'</button>':"")+'</div>'}
+function showWaAsk(d,p){
+ $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Send bill on WhatsApp</h2><div>'+(p?'No mobile number is saved for <b>'+esc(p.name)+'</b>.':'This person is not in your list.')+'<small>Enter a number with or without the country code.</small></div><input id="wph" type="tel" inputmode="tel" placeholder="Mobile number" autocomplete="off"><button class="p" style="background:#1fa855;border-color:#1fa855;color:#fff" data-act="wasave" data-id="'+d.id+'">'+(p?"Save number and send":"Send")+'</button><button data-act="wanone" data-id="'+d.id+'">Send without a number (choose the contact in WhatsApp)</button><button data-act="bill" data-id="'+d.id+'">Back to bill</button></div>';
+ $("#modal").style.display="block";setTimeout(function(){var f=$("#wph");if(f)f.focus()},60)}
+/* ---- negative stock notice ---- */
+function showStockNotice(d,ng){
+ $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Stock is now below zero</h2><div>Bill '+esc(d.no)+' is saved. You sold more than the stock you had, so these items now show a minus quantity:<div style="margin-top:8px">'+ng.map(function(x){return '<div class="line"><span>'+esc(x.name)+'<small>Sold '+x.sold+' in this bill</small></span><b class="low">'+x.stock+'</b></div>'}).join("")+'</div><small style="margin-top:8px">Add stock when you buy or receive more. You can turn this notice off in Settings.</small></div><button class="p" data-act="stockok" data-id="'+d.id+'">OK, view bill</button><button data-act="stocknomore" data-id="'+d.id+'">Don\'t show this again</button></div>';
+ $("#modal").style.display="block"}
+function stockSettings(){var on=prefs.stockWarn!==false;
+ return '<div class="row" style="flex-wrap:nowrap"><div><b>Negative stock notice</b><small>Show a message after a bill when an item goes below zero. Selling without stock is always allowed.</small></div><button '+(on?'class="p" ':'')+'style="width:auto;min-width:64px" data-act="stocknotice">'+(on?"On":"Off")+'</button></div>'}
+function optsItems(l,sel){return l.map(function(x){return '<option value="'+x.id+'"'+(x.id==sel?" selected":"")+">"+esc(x.name)+" · Stock "+x.stock+"</option>"}).join("")}
+/* ---- payment reminders: settings, schedule, due list ---- */
+function remOn(){return !!prefs.rem}
+function fmtDT(ms){return new Date(ms).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})}
+function remTimes(d){var out=[],tm=prefs.remTime||"10:00",base=new Date(d.date+"T"+tm+":00");
+ if(!isNaN(base.getTime()))(prefs.remDays||[]).forEach(function(n){var x=new Date(base.getTime());x.setDate(x.getDate()+n);out.push(x.getTime())});
+ if(d.remAt)out.push(d.remAt);return out}
+function remPending(){if(!remOn())return [];var now=Date.now();
+ return S.docs.filter(function(d){return d.type=="sale"&&d.total-d.paid>0.005&&remTimes(d).some(function(t){return t<=now&&t>(d.remLast||0)})})}
+function remHome(){var l=remPending();if(!l.length)return "";
+ return '<h3>Payment reminders due ('+l.length+')</h3><div class="card">'+l.map(function(d){return '<div class="line"><span><b>'+esc(d.partyName)+'</b><small>'+esc(d.no)+' · '+money(d.total-d.paid)+' due</small></span><span class="row" style="gap:6px;flex-wrap:nowrap"><button data-act="remskip" data-id="'+d.id+'">Skip</button><button class="tp" data-act="remind" data-id="'+d.id+'">Send</button></span></div>'}).join("")+'</div>'}
+function remSettings(){var on=remOn(),days=prefs.remDays||[],
+ h='<div class="row" style="flex-wrap:nowrap"><div><b>Payment reminders</b><small>Adds reminder buttons to sale bills and a due list on Home.</small></div><button '+(on?'class="p" ':'')+'style="width:auto;min-width:64px" data-act="remtoggle">'+(on?"On":"Off")+'</button></div>';
+ if(on){h+='<div><small>Remind me after the bill date (pick one or more)</small><div class="three" style="margin-top:6px">'+[1,3,7,15,30,60].map(function(n){return '<button '+(days.indexOf(n)>-1?'class="p" ':'')+'data-act="remday" data-t="'+n+'">'+n+(n==1?" day":" days")+'</button>'}).join("")+'</div></div><div><small>Reminder time of day</small><input id="remtime" type="time" value="'+esc(prefs.remTime||"10:00")+'"></div>'+(window.Notification?'<button data-act="remnotify">'+(prefs.remNotify?"Notifications on (tap to turn off)":"Notify me when I open the app")+'</button>':"")+'<small>WhatsApp cannot send by itself. When a reminder is due it shows on Home, and one tap opens WhatsApp with the message ready.</small>'}
+ return h}
+function remNotify(){try{if(!remOn()||!prefs.remNotify||!window.Notification||Notification.permission!=="granted")return;var n=remPending().length;
+ if(n&&!sessionStorage.getItem("remN")){sessionStorage.setItem("remN","1");new Notification("Payment reminders due",{body:n+(n>1?" bills are":" bill is")+" waiting for a reminder"})}}catch(e){}}
+function showRemSched(d){
+ $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Remind later</h2><div>'+esc(d.partyName)+' · '+esc(d.no)+'<small>'+(d.remAt&&d.remAt>Date.now()?"Scheduled for "+fmtDT(d.remAt)+".":"Choose when to be reminded. It will appear on Home at that time.")+'</small></div><div class="two"><button data-act="remset" data-id="'+d.id+'" data-t="1">In 1 day</button><button data-act="remset" data-id="'+d.id+'" data-t="3">In 3 days</button><button data-act="remset" data-id="'+d.id+'" data-t="7">In 1 week</button><button data-act="remset" data-id="'+d.id+'" data-t="15">In 15 days</button></div><div><small>Or pick a date and time</small><input id="remdt" type="datetime-local"></div><button class="p" data-act="remsetdt" data-id="'+d.id+'">Set this date and time</button>'+(d.remAt?'<button class="del" data-act="remclr" data-id="'+d.id+'">Clear scheduled reminder</button>':"")+'<button data-act="bill" data-id="'+d.id+'">Back to bill</button></div>';
+ $("#modal").style.display="block"}
+function showShare(d){
+ $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Share bill '+esc(d.no)+'</h2><button class="p" data-act="sharepdf" data-id="'+d.id+'">Send as PDF (WhatsApp)</button><button data-act="sharepic" data-id="'+d.id+'">Share bill photo (any app)</button><button data-act="sendwa" data-id="'+d.id+'">Send as text message</button><button data-act="dlpdf" data-id="'+d.id+'">Download PDF</button><button data-act="bill" data-id="'+d.id+'">Back to bill</button></div>';
+ $("#modal").style.display="block"}
+function remText(d){
+ var due=d.total-d.paid,pp=find(S.parties,d.partyId),t="Hello "+d.partyName+",\n\nThis is a friendly reminder from *"+CO+"*.\n\nPayment of *"+money(due)+"* is pending for invoice "+d.no+" dated "+d.date+" (bill total "+money(d.total)+").\n";
+ if(pp){var b=bal(pp);if(b>0.005&&Math.abs(b-due)>0.005)t+="Your total outstanding with us is *"+money(b)+"*.\n"}
+ return t+"\nKindly make the payment at your earliest convenience.\n\nThank you!"}
+function showRemAsk(d,p){
+ $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Send payment reminder</h2><div>'+(p?'No mobile number is saved for <b>'+esc(p.name)+'</b>.':'This person is not in your list.')+'<small>Enter a number with or without the country code.</small></div><input id="wph" type="tel" inputmode="tel" placeholder="Mobile number" autocomplete="off"><button class="p" data-act="remsave" data-id="'+d.id+'">'+(p?"Save number and send reminder":"Send reminder")+'</button><button data-act="remnone" data-id="'+d.id+'">Send without a number (choose the contact in WhatsApp)</button><button data-act="bill" data-id="'+d.id+'">Back to bill</button></div>';
+ $("#modal").style.display="block";setTimeout(function(){var f=$("#wph");if(f)f.focus()},60)}
+function showBill(d){
+ var sale=d.type=="sale",due=d.total-d.paid,lg=d.payLog||[],lgsum=lg.reduce(function(a,y){return a+y.amount},0),
+  lgrows=lg.map(function(y){return '<tr><td colspan="3">'+(sale?"Received":"Paid")+' later · '+y.date+(y.mode?" ("+esc(y.mode)+")":"")+'</td><td class="r">'+money(y.amount)+'</td></tr>'}).join(""),pp=find(S.parties,d.partyId),pend=pp?Math.min(due,bal(pp)):0,
+  remBtn=(remOn()&&sale&&due>0.005)?'<div class="two"><button data-act="remind" data-id="'+d.id+'">Send reminder</button><button data-act="remsched" data-id="'+d.id+'">Remind later</button></div>'+(d.remAt&&d.remAt>Date.now()?'<small>Reminder scheduled for '+fmtDT(d.remAt)+'</small>':""):"",
+  payBtn=(canWrite&&pend>0.005)?'<button class="p" data-act="paybill" data-id="'+d.id+'">'+(sale?"Take":"Make")+' payment · '+money(pend)+' pending</button>':"";
+ var h='<div class="bill"><h2 style="margin:0;color:#111">'+esc(CO)+'</h2><p style="margin:4px 0 14px"><b>'+(sale?"Invoice ":"Purchase bill ")+d.no+'</b><br>Date: '+d.date+'<br>'+(sale?"Bill to: ":"Supplier: ")+esc(d.partyName)+'</p><table><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr>';
+ d.lines.forEach(function(l){h+='<tr><td>'+esc(l.name)+'</td><td class="r">'+l.qty+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+money(l.qty*l.price)+'</td></tr>'});
+ h+='<tr><td colspan="3"><b>Total</b></td><td class="r"><b>'+money(d.total)+'</b></td></tr><tr><td colspan="3">'+(sale?"Received":"Paid")+(d.mode?" ("+esc(d.mode)+")":"")+'</td><td class="r">'+money(d.paid-lgsum)+'</td></tr>'+lgrows+'<tr><td colspan="3"><b>Balance due</b></td><td class="r"><b>'+money(due)+'</b></td></tr></table><div class="stack noprint" style="margin-top:16px">'+payBtn+''+remBtn+'<button class="p" data-act="shareopts" data-id="'+d.id+'">Share</button><button data-act="print">Print</button><button data-act="closem">Close</button>'+(canWrite?'<button class="del" data-act="askdel" data-k="docs" data-id="'+d.id+'">Delete this bill</button>':"")+'</div></div>';
+ $("#modal").innerHTML=h;$("#modal").style.display="block"}
+function showPay(p,amt,bd){
+ var bn=bd&&bd.no,b=bal(p),cu=p.type=="customer";
+ $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">'+(cu?"Take payment":"Make payment")+'</h2><div>'+esc(p.name)+(bn?'<small>For bill '+esc(bn)+'</small>':"")+'<small>Total outstanding '+money(b)+'</small></div><input id="pm" type="number" step="any" placeholder="Amount" value="'+(amt!=null?amt:(b>0?Math.round(b*100)/100:""))+'"><select id="pmd"><option>Cash</option><option>Card</option><option>Bank / UPI</option></select><button class="p" data-act="recpay" data-id="'+p.id+'" data-bid="'+(bd?bd.id:"")+'">Record payment</button><button data-act="closem">Cancel</button></div>';
+ $("#modal").style.display="block"}
+
+var V={users:vUsers,profit:vProfit,home:vHome,items:vItems,sale:function(){return vDocPage("sale")},buy:function(){return vDocPage("purchase")},newsale:function(){return vEntry("sale")},newbuy:function(){return vEntry("purchase")},people:vPeople,settings:vSettings,item:vItemPage,parties:vParties};
+function render(){
+ if(cloudCfg&&A!="in"){$("#nav").style.display="none";$("#app").innerHTML=vAuth();return}
+ $("#nav").style.display="";
+ var h=location.hash.slice(1);if(!V[h]||(!OWN&&h=="users"))h="home";
+ var ch=h=="profit"||h=="users"?"settings":h=="parties"?"people":h=="newsale"?"sale":h=="newbuy"?"buy":h=="item"?"items":h;
+ document.querySelectorAll("#nav a").forEach(function(a){if(a.getAttribute("href")=="#"+ch)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+ var pre=VIEWAS?'<div class="note">Viewing <b>'+esc(VIEWAS)+'</b>\'s data as owner. <a href="#" data-act="uback" style="text-decoration:underline">Back to my data</a></div>':"";if(!ready)pre+='<div class="card">'+esc(loadMsg||"Loading your data…")+'</div>';
+ 
+ else if(!canWrite)pre+='<div class="note">View only: you can look but not change data.</div>';
+ $("#app").innerHTML=pre+(ready?V[h]():"")}
+window.addEventListener("hashchange",function(){if(location.hash!="#parties")selP="";render();window.scrollTo(0,0)});
+document.addEventListener("change",function(e){
+ var id=e.target.id,t=curT();
+ if(id=="pd")dm[t].date=e.target.value;
+ else if(id=="pmd")dm[t].mode=e.target.value;
+ else if(id=="pt"||id=="pi"){if(id=="pt")dm[t].party=e.target.value;else dm[t].item=e.target.value;var pe=$("#pt");$("#pp").value=priceFor(find(S.items,$("#pi").value),find(S.parties,pe?pe.value:""),t)}});
+
+
+/* ---- type-to-search for customer / supplier / item on the new bill form ---- */
+document.addEventListener("input",function(e){var id=e.target.id;if(id!="psq"&&id!="isq")return;
+ var t=curT(),isP=id=="psq",sel=$(isP?"#pt":"#pi"),hint=$(isP?"#psh":"#ish");if(!sel)return;
+ var list=isP?S.parties.filter(function(x){return x.type==(t=="sale"?"customer":"supplier")}):S.items,q=e.target.value.trim().toLowerCase(),
+  m=q?list.filter(function(x){return String(x.name).toLowerCase().indexOf(q)>-1}):list;
+ if(!m.length){hint.textContent="No match found";return}
+ var cur=sel.value;sel.innerHTML=(isP?opts:optsItems)(m,m.some(function(x){return x.id==cur})?cur:m[0].id);
+ hint.textContent=q?m.length+" match"+(m.length>1?"es":""):"";
+ if(isP)dm[t].party=sel.value;else dm[t].item=sel.value;
+ var pe=$("#pt"),ie=$("#pi"),pp=$("#pp");if(pp&&ie)pp.value=priceFor(find(S.items,ie.value),find(S.parties,pe?pe.value:""),t)});
+document.addEventListener("click",async function(e){
+ var b=e.target.closest("[data-act]");if(!b)return;
+ var a=b.dataset.act,id=b.dataset.id,t=b.dataset.t,it,p;
+ if(!OWN&&/^(uadd|upw|upwgo|utoggle|urm|urmgo|uapprove|usignups|uopen|uback|uerase|uerasego|uem|uemgo)$/.test(a))return toast("Only the owner can do this");
+ try{
+ if(a=="additem"){var nm=$("#ni").value.trim();if(!nm)return toast("Enter an item name");
+  await put("items",{id:uid(),name:nm,buy:num("nb"),sell:num("ns"),stock:num("nq"),min:num("nm")});render()}
+ else if(a=="addstock"||a=="redstock"){it=find(S.items,id);var q=num("a-"+id),rem=a=="redstock";if(q<=0)return toast("Enter a quantity");
+  if(rem&&q>it.stock)return toast("Only "+it.stock+" in stock");
+  $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">'+(rem?"Remove stock?":"Add stock?")+'</h2><div>'+(rem?"Remove ":"Add ")+'<b>'+q+'</b> '+(rem?"from ":"to ")+'<b>'+esc(it.name)+'</b>.<small>Stock changes from '+it.stock+' to '+(it.stock+(rem?-q:q))+'. This is saved in the item history, not as a bill.</small></div><button class="'+(rem?"pur":"blu")+'" data-act="dostock" data-id="'+id+'" data-q="'+q+'" data-d="'+(rem?"remove":"add")+'">Yes, '+(rem?"remove":"add")+'</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block"}
+ else if(a=="dostock"){it=find(S.items,id);if(!it)return;var q2=+b.dataset.q,rm2=b.dataset.d=="remove",bf=it.stock;if(rm2&&q2>bf)return toast("Only "+bf+" in stock");
+  b.disabled=true;var af=bf+(rm2?-q2:q2);await upd("items",id,{stock:af});
+  await put("adjs",{id:uid(),date:iso(new Date()),ts:Date.now(),itemId:id,itemName:it.name,qty:q2,dir:b.dataset.d,before:bf,after:af});
+  $("#modal").style.display="none";toast(rm2?"Stock removed":"Stock added");render()}
+ else if(a=="adjedit"){var aj=find(S.adjs,id);if(!aj)return toast("That entry was not found");
+  $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Change this stock entry</h2><div><b>'+esc(aj.itemName)+'</b> · '+aj.date+'<small>Now: '+(aj.dir=="add"?"added ":"removed ")+aj.qty+'. Stock is corrected by the difference.</small></div><select id="aj-d"><option value="add"'+(aj.dir=="add"?" selected":"")+'>Stock added</option><option value="remove"'+(aj.dir=="remove"?" selected":"")+'>Stock removed</option></select><input id="aj-q" type="number" step="any" min="0" value="'+aj.qty+'" placeholder="Quantity"><button class="p" data-act="adjeditgo" data-id="'+id+'">Save change</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block"}
+ else if(a=="adjeditgo"){var aj2=find(S.adjs,id),it3=aj2&&find(S.items,aj2.itemId);if(!aj2)return toast("That entry was not found");if(!it3)return toast("This item was deleted, so the entry cannot be changed");
+  var nq=num("aj-q"),nd=$("#aj-d").value;if(nq<=0)return toast("Enter a quantity");
+  var oldS=aj2.dir=="add"?aj2.qty:-aj2.qty,newS=nd=="add"?nq:-nq,ns2=it3.stock+(newS-oldS);
+  if(ns2<0)return toast("Stock would go below zero (only "+it3.stock+" in stock now)");
+  b.disabled=true;await upd("items",aj2.itemId,{stock:ns2});
+  await upd("adjs",id,{qty:nq,dir:nd,after:aj2.before+newS,edited:Date.now()});
+  $("#modal").style.display="none";toast("Stock entry changed");render()}
+ else if(a=="adjundo"){var aj3=find(S.adjs,id);if(!aj3)return toast("That entry was not found");
+  $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Undo this stock entry?</h2><div>'+(aj3.dir=="add"?"Stock added: ":"Stock removed: ")+'<b>'+aj3.qty+'</b> of <b>'+esc(aj3.itemName)+'</b> on '+aj3.date+'.<small>Undoing '+(aj3.dir=="add"?"takes it back out of stock":"puts it back into stock")+' and removes this line from the history.</small></div><button class="dbtn" data-act="adjundogo" data-id="'+id+'">Yes, undo it</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block"}
+ else if(a=="adjundogo"){var aj4=find(S.adjs,id),it4=aj4&&find(S.items,aj4.itemId);if(!aj4)return toast("That entry was not found");
+  b.disabled=true;
+  if(it4){var rs=it4.stock+(aj4.dir=="add"?-aj4.qty:aj4.qty);if(rs<0){b.disabled=false;return toast("Cannot undo: only "+it4.stock+" in stock now")}await upd("items",aj4.itemId,{stock:rs})}
+  await rm("adjs",id);$("#modal").style.display="none";toast("Stock entry undone");render()}
+ else if(a=="addline"){it=find(S.items,$("#pi").value);var qy=num("pq");if(!it||qy<=0)return toast("Choose an item and quantity");
+  draft[t].push({itemId:it.id,name:it.name,qty:qy,price:num("pp"),cost:it.buy});render()}
+ else if(a=="rmline"){draft[t].splice(+b.dataset.n,1);render()}
+ else if(a=="saveentry"){if(!$("#pt"))return toast("Add a "+(t=="sale"?"customer":"supplier")+" first");var L=draft[t],sale=t=="sale",party=find(S.parties,$("#pt").value),need={};
+  L.forEach(function(l){need[l.itemId]=(need[l.itemId]||0)+l.qty});
+  var tot=L.reduce(function(s,l){return s+l.qty*l.price},0),paid=Math.min(num("pa"),tot);
+  var d={id:uid(),no:nextNo(t),type:t,date:$("#pd").value||iso(new Date()),ts:Date.now(),partyId:party.id,partyName:party.name,lines:L.slice(),total:tot,paid:paid,mode:$("#pmd").value};
+  b.disabled=true;await put("docs",d);
+ var pr3=Object.assign({},party.prices||{}),pch=false;
+  L.forEach(function(l){var itx=find(S.items,l.itemId);if(!itx)return;var std=sale?itx.sell:itx.buy,cp=pr3[l.itemId]!=null?pr3[l.itemId]:std;
+   if(Math.abs(l.price-cp)>0.0001){if(Math.abs(l.price-std)<0.0001)delete pr3[l.itemId];else pr3[l.itemId]=l.price;pch=true}});
+  if(pch)await upd("parties",party.id,{prices:pr3});
+  for(var id2 in need){var y=find(S.items,id2);await upd("items",id2,sale?{stock:y.stock-need[id2]}:{stock:y.stock+need[id2],buy:L.filter(function(l){return l.itemId==id2}).pop().price})}
+  draft[t]=[];dm[t]={date:"",party:"",item:"",paid:"",mode:"Cash"};location.hash=sale?"#sale":"#buy";render();var ng=sale?Object.keys(need).map(function(k){var q=find(S.items,k);return q&&q.stock<0?{name:q.name,stock:q.stock,sold:need[k]}:null}).filter(Boolean):[];if(ng.length&&prefs.stockWarn!==false)showStockNotice(d,ng);else showBill(d)}
+ else if(a=="bill"){showBill(find(S.docs,id))}
+ else if(a=="backup"){var bk=new Blob([JSON.stringify(S)],{type:"application/json"}),bu=URL.createObjectURL(bk),ba=document.createElement("a");ba.href=bu;ba.download="stock-backup-"+iso(new Date())+".json";document.body.appendChild(ba);ba.click();ba.remove();toast("Backup downloaded")}
+ else if(a=="restore"){$("#rf").click()}
+ else if(a=="closem"){$("#modal").style.display="none"}
+ else if(a=="print"){window.print()}
+ else if(a=="addparty"){var pn=$("#np").value.trim();if(!pn)return toast("Enter a name");await put("parties",{id:uid(),name:pn,type:$("#nt").value,prices:{},phone:($("#nph").value||"").trim()});render()}
+ else if(a=="setprice"){p=find(S.parties,id);var v=$("#pv-"+id).value;if(v==="")return toast("Enter a price");var pr=Object.assign({},p.prices);pr[$("#ps-"+id).value]=parseFloat(v);await upd("parties",id,{prices:pr});render()}
+ else if(a=="rmprice"){var pr2=Object.assign({},find(S.parties,id).prices);delete pr2[b.dataset.k];await upd("parties",id,{prices:pr2});render()}
+ else if(a=="paybill"){var bd=find(S.docs,id),pq=bd&&find(S.parties,bd.partyId);if(!pq)return toast("This person was deleted");showPay(pq,Math.round(Math.min(bd.total-bd.paid,bal(pq))*100)/100,bd)}
+ else if(a=="takepay"){showPay(find(S.parties,id))}
+ else if(a=="partysale"){p=find(S.parties,id);if(!p)return;var pst=p.type=="customer"?"sale":"purchase";dm[pst].party=p.id;draft[pst]=[];location.hash=pst=="sale"?"#newsale":"#newbuy"}
+ else if(a=="recpay"){p=find(S.parties,id);var am=num("pm");if(am<=0)return toast("Enter an amount");
+  var bid=b.dataset.bid;
+  if(bid){var bd2=find(S.docs,bid);if(!bd2)return toast("Bill not found");var cap=Math.round(Math.min(bd2.total-bd2.paid,bal(p))*100)/100;
+   if(am>cap+0.005)return toast("Only "+money(cap)+" is pending on this bill");
+   var lg=(bd2.payLog||[]).concat([{date:iso(new Date()),amount:am,mode:$("#pmd").value}]);
+   await upd("docs",bid,{paid:Math.round((bd2.paid+am)*100)/100,payLog:lg});
+   $("#modal").style.display="none";toast("Bill updated");render();return}
+  await put("pays",{id:uid(),date:iso(new Date()),ts:Date.now(),partyId:p.id,partyName:p.name,amount:am,mode:$("#pmd").value,billNo:b.dataset.b||"",dir:p.type=="customer"?"in":"out"});
+  $("#modal").style.display="none";toast("Payment recorded");render()}
+ else if(a=="askdel"){showDel(b.dataset.k,id)}
+ else if(a=="dodel"){b.disabled=true;await doDel(b.dataset.k,id)}
+ else if(a=="theme"){prefs.theme=t;savePrefs();applyTheme();render()}
+ else if(a=="saveco"){prefs.co=$("#co").value.trim();prefs.cc=($("#cc").value||"").replace(/\D/g,"")||"91";CO=prefs.co||"Your Company Name";savePrefs();toast("Saved")}
+ else if(a=="openp"){selP=id;openP[id]=true;if(location.hash!="#parties"){location.hash="#parties"}else{render()}window.scrollTo(0,0)}
+ else if(a=="fab"){var sl=t=="sale";$("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">What do you want to add?</h2><button class="p" data-act="fabgo" data-h="'+(sl?"newsale":"newbuy")+'">＋ New '+(sl?"sale":"purchase")+'</button><button data-act="newparty" data-t="'+(sl?"customer":"supplier")+'">＋ Add '+(sl?"customer":"supplier")+'</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block"}
+ else if(a=="fabgo"){$("#modal").style.display="none";location.hash="#"+b.dataset.h}
+ else if(a=="newparty"){$("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Add '+t+'</h2><input id="qpn" placeholder="Name" autocomplete="off"><input id="qph" type="tel" inputmode="tel" placeholder="Mobile number (optional)"><button class="p" data-act="saveqp" data-t="'+t+'">Save '+t+'</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block";setTimeout(function(){var f=$("#qpn");if(f)f.focus()},60)}
+ else if(a=="saveqp"){var qn=$("#qpn").value.trim();if(!qn)return toast("Enter a name");b.disabled=true;var nid=uid();await put("parties",{id:nid,name:qn,type:t,prices:{},phone:($("#qph").value||"").trim()});if(location.hash=="#newsale")dm.sale.party=nid;if(location.hash=="#newbuy")dm.purchase.party=nid;$("#modal").style.display="none";toast((t=="customer"?"Customer":"Supplier")+" added");render()}
+ else if(a=="newitem"){$("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">New item</h2><input id="qin" placeholder="Item name" autocomplete="off"><div class="two"><input id="qib" type="number" step="any" placeholder="Buying price"><input id="qis" type="number" step="any" placeholder="Selling price"></div><input id="qiq" type="number" placeholder="Stock you have now (optional)"><button class="p" data-act="saveqi" data-t="'+t+'">Save item</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block";setTimeout(function(){var f=$("#qin");if(f)f.focus()},60)}
+ else if(a=="saveqi"){var qn2=$("#qin").value.trim();if(!qn2)return toast("Enter an item name");b.disabled=true;var iid=uid();await put("items",{id:iid,name:qn2,buy:num("qib"),sell:num("qis"),stock:num("qiq"),min:0});dm[t].item=iid;$("#modal").style.display="none";toast("Item added");render()}
+ else if(a=="openitem"){selItem=id;location.hash="#item"}
+ else if(a=="backp"){e.preventDefault();selP="";render();window.scrollTo(0,0)}
+ else if(a=="clrdate"){delete pf[id];render()}
+ else if(a=="prview"){PR.view=t;PR.open="";qs.profit="";render()}
+ else if(a=="propen"){PR.open=PR.open==id?"":id;$("#lst").innerHTML=profitList()}
+ else if(a=="sharepdf"){var pdD=find(S.docs,id);if(!pdD)return;await sharePdf(pdD)}
+ else if(a=="sendpic"){var pcD=find(S.docs,id);if(!pcD)return;var pcP=find(S.parties,pcD.partyId),pcN=waNum(pcP&&pcP.phone);if(!pcN){showPicAsk(pcD,pcP);return}await sendPicTo(pcD,pcN)}
+ else if(a=="sharepic"){var pcE=find(S.docs,id);if(!pcE)return;await sharePic(pcE)}
+ else if(a=="picsave"){var pcF=find(S.docs,id);if(!pcF)return;var pcQ=find(S.parties,pcF.partyId),pcPh=($("#wph").value||"").trim(),pcM=waNum(pcPh);if(!pcM)return toast("Enter a valid mobile number");
+  if(pcQ)upd("parties",pcQ.id,{phone:pcPh}).catch(function(){});
+  $("#modal").style.display="none";await sendPicTo(pcF,pcM)}
+ else if(a=="dlpdf"){var pdE=find(S.docs,id);if(!pdE)return;pdfSave(pdfFile(pdE));toast("PDF saved")}
+ else if(a=="implines"){if(!canWrite)return toast("View only: you cannot change data");IMP={step:0,kind:"lines",cols:[],rows:[],map:{},mode:"skip",file:"",pdir:"in"};impShow()}
+ else if(a=="shareopts"){var shD=find(S.docs,id);if(!shD)return;showShare(shD)}
+ else if(a=="remind"){var rmD=find(S.docs,id);if(!rmD)return;var rmP=find(S.parties,rmD.partyId),rmN=waNum(rmP&&rmP.phone);if(!rmN){showRemAsk(rmD,rmP);return}waOpen(rmN,remText(rmD));upd("docs",rmD.id,{remLast:Date.now()}).then(function(){if(location.hash=="#home"||location.hash=="")render()}).catch(function(){})}
+ else if(a=="remsave"){var rsD=find(S.docs,id);if(!rsD)return;var rsP=find(S.parties,rsD.partyId),rsPh=($("#wph").value||"").trim(),rsN=waNum(rsPh);if(!rsN)return toast("Enter a valid mobile number");
+  if(rsP)upd("parties",rsP.id,{phone:rsPh}).catch(function(){});
+  waOpen(rsN,remText(rsD));upd("docs",rsD.id,{remLast:Date.now()}).catch(function(){});$("#modal").style.display="none"}
+ else if(a=="remnone"){var rnD=find(S.docs,id);if(rnD){waOpen("",remText(rnD));upd("docs",rnD.id,{remLast:Date.now()}).catch(function(){})}}
+ else if(a=="stockok"){showBill(find(S.docs,id))}
+ else if(a=="stocknomore"){prefs.stockWarn=false;savePrefs();toast("Notice turned off. You can turn it on again in Settings");showBill(find(S.docs,id))}
+ else if(a=="stocknotice"){prefs.stockWarn=prefs.stockWarn===false;savePrefs();render()}
+ else if(a=="remtoggle"){prefs.rem=!prefs.rem;if(!prefs.remDays)prefs.remDays=[3,7];savePrefs();render()}
+ else if(a=="remday"){var rdn=+t,rdl=(prefs.remDays||[]).slice(),rdi=rdl.indexOf(rdn);if(rdi>-1)rdl.splice(rdi,1);else rdl.push(rdn);rdl.sort(function(x,y){return x-y});prefs.remDays=rdl;savePrefs();render()}
+ else if(a=="remnotify"){if(prefs.remNotify){prefs.remNotify=false;savePrefs();render();return}
+  if(!window.Notification)return toast("Notifications are not supported here");
+  var nr=await Notification.requestPermission();prefs.remNotify=nr=="granted";savePrefs();render();toast(prefs.remNotify?"Notifications on":"Notification permission was not given")}
+ else if(a=="remskip"){await upd("docs",id,{remLast:Date.now()});render()}
+ else if(a=="remsched"){var rsc=find(S.docs,id);if(rsc)showRemSched(rsc)}
+ else if(a=="remset"||a=="remsetdt"){var rst=find(S.docs,id);if(!rst)return;var rx;
+  if(a=="remset"){rx=new Date();rx.setDate(rx.getDate()+(+t));var tp=(prefs.remTime||"10:00").split(":");rx.setHours(+tp[0]||10,+tp[1]||0,0,0)}
+  else{rx=new Date($("#remdt").value);if(isNaN(rx.getTime())||rx.getTime()<=Date.now())return toast("Pick a date and time in the future")}
+  await upd("docs",id,{remAt:rx.getTime()});toast("Reminder set for "+fmtDT(rx.getTime()));showBill(find(S.docs,id))}
+ else if(a=="remclr"){await upd("docs",id,{remAt:0});toast("Scheduled reminder cleared");showBill(find(S.docs,id))}
+ else if(a=="sendwa"){var wd=find(S.docs,id);if(!wd)return;var wp=find(S.parties,wd.partyId),wn=waNum(wp&&wp.phone);if(!wn){showWaAsk(wd,wp);return}waOpen(wn,waText(wd))}
+ else if(a=="wasave"){var wd2=find(S.docs,id);if(!wd2)return;var wp2=find(S.parties,wd2.partyId),ph=($("#wph").value||"").trim(),wn2=waNum(ph);if(!wn2)return toast("Enter a valid mobile number");
+  if(wp2)upd("parties",wp2.id,{phone:ph}).catch(function(){});
+  waOpen(wn2,waText(wd2));$("#modal").style.display="none"}
+ else if(a=="wanone"){var wd3=find(S.docs,id);if(wd3)waOpen("",waText(wd3))}
+ else if(a=="editph"){p=find(S.parties,id);if(!p)return;$("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Mobile number</h2><div>'+esc(p.name)+'<small>Used to send bills on WhatsApp.</small></div><input id="eph" type="tel" inputmode="tel" value="'+esc(p.phone||"")+'" placeholder="Mobile number"><button class="p" data-act="saveph" data-id="'+id+'">Save number</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block";setTimeout(function(){var f=$("#eph");if(f)f.focus()},60)}
+ else if(a=="saveph"){b.disabled=true;await upd("parties",id,{phone:($("#eph").value||"").trim()});$("#modal").style.display="none";toast("Mobile number saved");render()}
+ else if(a=="askreset"){if(!canWrite)return toast("View only: you cannot change data");
+  $("#modal").innerHTML='<div class="sheet stack"><h2 style="margin:0">Erase everything?</h2><div>This permanently deletes <b>'+S.items.length+'</b> items, <b>'+S.parties.length+'</b> customers and suppliers, <b>'+S.docs.length+'</b> bills, <b>'+S.pays.length+'</b> payments and the stock history'+(db?" from your account on every device":" from this device")+'. Your company name and theme on this device also go back to the defaults.<small>This cannot be undone.</small></div><label class="chk"><input type="checkbox" id="rsb"><span>Download a backup file first (recommended)</span></label><div><small>Type ERASE to confirm</small><input id="rsc" autocomplete="off" autocapitalize="characters" placeholder="ERASE"></div><button class="dbtn" data-act="doreset">Erase everything</button><button data-act="closem">Cancel</button></div>';$("#modal").style.display="block"}
+ else if(a=="doreset"){if($("#rsc").value.trim().toUpperCase()!="ERASE")return toast("Type ERASE to confirm");
+  b.disabled=true;
+  if($("#rsb").checked){var rb=new Blob([JSON.stringify(S)],{type:"application/json"}),ru=URL.createObjectURL(rb),ra=document.createElement("a");ra.href=ru;ra.download="stock-backup-"+iso(new Date())+".json";document.body.appendChild(ra);ra.click();ra.remove()}
+  if(db){try{await api("data",{op:"erase"})}catch(e){toast("Could not erase: "+e.message);throw e}}
+  COLS.forEach(function(c){S[c]=[]});draft={sale:[],purchase:[]};selP="";selItem="";openP={};
+  try{localStorage.removeItem("stockapp_local")}catch(x){}
+  if(!VIEWAS){prefs={theme:"light",co:""};savePrefs();CO="Your Company Name";applyTheme()}
+  $("#modal").style.display="none";location.hash="#home";toast("Everything erased. The app is like new.");render()}
+ else if(a=="impopen"){if(!canWrite)return toast("View only: you cannot change data");IMP={step:0,kind:"items",cols:[],rows:[],map:{},mode:"skip",file:"",pdir:"in"};impShow()}
+ else if(a=="impkind"){IMP.kind=t;impShow()}
+ else if(a=="impfile"){$("#impf").click()}
+ else if(a=="impback"){IMP.step=0;impShow()}
+ else if(a=="impgo"){b.disabled=true;await impRun()}
+ else if(UA[a]){await UA[a](b)}
+ else if(AUTH[a]){await AUTH[a](b)}
+ }catch(err){if(b)b.disabled=false}
+});
+document.addEventListener("change",function(e){if(e.target.id!="rf"||!e.target.files[0])return;var r=new FileReader();r.onload=function(){try{var o=JSON.parse(r.result);if(db){importAll(o).then(function(){render();toast("Backup restored")});return}
+["items","parties","docs","pays","adjs"].forEach(function(c){S[c]=o[c]||[]});localStorage.setItem("stockapp_local",JSON.stringify(S));render();toast("Backup restored")}catch(x){toast("That file could not be read")}};r.readAsText(e.target.files[0])});
+document.addEventListener("change",function(e){var id=e.target.id||"";
+ if(id=="impf"){var fl=e.target.files[0];if(!fl)return;
+  if(/\.xlsx?$/i.test(fl.name))return toast("Save the Excel file as CSV first, then choose it.");
+  var r=new FileReader();r.onload=function(){try{impLoad(String(r.result),fl.name)}catch(x){toast("Could not read that file. Use a CSV or JSON export with a header row.")}};r.readAsText(fl)}
+ else if(id=="remtime"){prefs.remTime=e.target.value||"10:00";savePrefs()}
+ else if(id=="pr-m"){var pv2=parseFloat(e.target.value);if(isNaN(pv2))delete prefs.pm;else prefs.pm=pv2;savePrefs();render()}
+ else if(id=="pr-range"){PR.range=e.target.value;PR.open="";render()}
+ else if(id.indexOf("imp-")==0){if(id=="imp-mode")IMP.mode=e.target.value;else if(id=="imp-pdir")IMP.pdir=e.target.value;else IMP.map[id.slice(4)]=e.target.value===""?null:+e.target.value;impRefresh()}});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
+render();initAuth();setTimeout(remNotify,1500);
+</script>
+</body>
+</html>
